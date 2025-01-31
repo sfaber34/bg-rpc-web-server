@@ -7,9 +7,9 @@ const app = express();
 
 const { webServerPort } = require('./config');
 
-const proxyUrlRouter = require('./routes/proxyurl');
+const fallbackUrlRouter = require('./routes/fallbackurl');
 
-app.use(proxyUrlRouter);
+app.use(fallbackUrlRouter);
 
 https.globalAgent.options.ca = require("ssl-root-cas").create(); // For sql connection
 
