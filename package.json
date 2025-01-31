@@ -1,0 +1,14 @@
+{
+  "name": "bg-rpc-web-server",
+  "version": "1.0.0",
+  "description": "BuidlGuidl RPC Web Server",
+  "main": "webServer.js",
+  "scripts": {
+    "start": "node webServer.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "private": true,
+  "author": "",
+  "license": "MIT",
+  "repository": "https://github.com/sfaber34/bg-rpc-web-server.git"
+}
