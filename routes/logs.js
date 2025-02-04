@@ -77,6 +77,11 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
   return `
     <div id="${tableId}" style="margin-bottom: 40px;">
       <h2>${title} (${logs.length} total entries)</h2>
+      <div class="filter-buttons" style="margin-bottom: 15px;">
+        <button onclick="filterLogs('${tableId}', 'all')" class="filter-btn active">All</button>
+        <button onclick="filterLogs('${tableId}', 'success')" class="filter-btn">Success</button>
+        <button onclick="filterLogs('${tableId}', 'error')" class="filter-btn">Error</button>
+      </div>
       <table border="1" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
         <thead>
           <tr style="background-color: #f2f2f2;">
@@ -111,10 +116,21 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
 router.get("/logs", async (req, res) => {
   try {
     const currentPage = parseInt(req.query.page) || 1;
-    const [fallbackLogs, cacheLogs] = await Promise.all([
+    const filter = req.query.filter || 'all';
+    let [fallbackLogs, cacheLogs] = await Promise.all([
       fetchLogs('/fallbackRequests'),
       fetchLogs('/cacheRequests')
     ]);
+
+    // Apply filters if needed
+    if (filter !== 'all') {
+      const filterFn = filter === 'success' 
+        ? log => log.status.toLowerCase() === 'success'
+        : log => log.status.toLowerCase() !== 'success';
+      
+      fallbackLogs = fallbackLogs.filter(filterFn);
+      cacheLogs = cacheLogs.filter(filterFn);
+    }
 
     // If it's an AJAX request for a specific table, return only the updated parts
     if (req.query.tableId) {
@@ -162,10 +178,32 @@ router.get("/logs", async (req, res) => {
               color: white;
               border-color: #007bff;
             }
+            .filter-buttons {
+              display: flex;
+              gap: 10px;
+            }
+            .filter-btn {
+              padding: 8px 16px;
+              border: 1px solid #ddd;
+              background: white;
+              border-radius: 4px;
+              cursor: pointer;
+              font-size: 14px;
+            }
+            .filter-btn:hover {
+              background-color: #f5f5f5;
+            }
+            .filter-btn.active {
+              background-color: #007bff;
+              color: white;
+              border-color: #007bff;
+            }
           </style>
           <script>
             let fallbackCurrentPage = 1;
             let cacheCurrentPage = 1;
+            let fallbackCurrentFilter = 'all';
+            let cacheCurrentFilter = 'all';
 
             async function changePage(tableId, page) {
               try {
@@ -175,7 +213,8 @@ router.get("/logs", async (req, res) => {
                   cacheCurrentPage = page;
                 }
 
-                const response = await fetch(\`/logs?page=\${page}&tableId=\${tableId}\`, {
+                const filter = tableId === 'fallbackLogs' ? fallbackCurrentFilter : cacheCurrentFilter;
+                const response = await fetch(\`/logs?page=\${page}&tableId=\${tableId}&filter=\${filter}\`, {
                   headers: {
                     'Accept': 'application/json'
                   }
@@ -187,6 +226,41 @@ router.get("/logs", async (req, res) => {
                 document.getElementById(\`\${tableId}-pagination\`).innerHTML = data.pagination;
               } catch (error) {
                 console.error('Error changing page:', error);
+              }
+            }
+
+            async function filterLogs(tableId, filter) {
+              try {
+                // Update filter state
+                if (tableId === 'fallbackLogs') {
+                  fallbackCurrentFilter = filter;
+                  fallbackCurrentPage = 1;
+                } else {
+                  cacheCurrentFilter = filter;
+                  cacheCurrentPage = 1;
+                }
+
+                // Update active button state
+                const buttons = document.querySelectorAll(\`#\${tableId} .filter-btn\`);
+                buttons.forEach(btn => btn.classList.remove('active'));
+                const activeButton = Array.from(buttons).find(btn => 
+                  btn.textContent.toLowerCase() === filter.toLowerCase()
+                );
+                if (activeButton) activeButton.classList.add('active');
+
+                // Fetch filtered data
+                const response = await fetch(\`/logs?page=1&tableId=\${tableId}&filter=\${filter}\`, {
+                  headers: {
+                    'Accept': 'application/json'
+                  }
+                });
+                const data = await response.json();
+                
+                // Update the table
+                document.getElementById(\`\${tableId}-body\`).innerHTML = data.tbody;
+                document.getElementById(\`\${tableId}-pagination\`).innerHTML = data.pagination;
+              } catch (error) {
+                console.error('Error filtering logs:', error);
               }
             }
           </script>

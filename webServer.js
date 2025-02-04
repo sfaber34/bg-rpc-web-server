@@ -34,5 +34,5 @@ const server = https.createServer(
 server.listen(webServerPort, () => {
   console.log("----------------------------------------------------------------------------------------------------------------");
   console.log("----------------------------------------------------------------------------------------------------------------");
-  console.log(`webServer.js: HTTPS server listening on port ${webServerPort}...`);
+  console.log(`HTTPS server listening on port ${webServerPort}...`);
 });
