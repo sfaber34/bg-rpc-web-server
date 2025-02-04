@@ -8,8 +8,10 @@ const app = express();
 const { webServerPort } = require('./config');
 
 const fallbackUrlRouter = require('./routes/fallbackurl');
+const logsRouter = require('./routes/logs');
 
 app.use(fallbackUrlRouter);
+app.use(logsRouter);
 
 https.globalAgent.options.ca = require("ssl-root-cas").create(); // For sql connection
 
