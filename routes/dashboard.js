@@ -41,6 +41,14 @@ router.get("/dashboard", async (req, res) => {
           </div>
 
           <div class="dashboard-section">
+            <h2>Response Time Metrics</h2>
+            <div class="dashboard">
+              <div id="timeGauge1" class="gauge"></div>
+              <div id="timeGauge2" class="gauge"></div>
+            </div>
+          </div>
+
+          <div class="dashboard-section">
             <h2>Error Metrics</h2>
             <div class="dashboard">
               <div id="errorGauge1" class="gauge"></div>
@@ -54,16 +62,17 @@ router.get("/dashboard", async (req, res) => {
             // Format metric names to be more readable
             function formatMetricName(name) {
               return name
-                // Remove the 'n' prefix if it exists
-                .replace(/^n/, '')
+                // Only remove the 'n' prefix if it exists, preserve 'ave'
+                .replace(/^n(?!.*ave)/, '')
                 // Split on capital letters and numbers
-                .match(/[A-Z]{1}[a-z]+|[0-9]+/g)
+                .match(/[A-Z]{1}[a-z]+|[0-9]+|ave/g)
+                .map(word => word === 'ave' ? 'Ave' : word)
                 .join(' ');
             }
             
             // Create performance gauge charts
             Object.entries(data)
-              .filter(([key]) => !key.toLowerCase().includes('error'))
+              .filter(([key]) => !key.toLowerCase().includes('error') && !key.toLowerCase().includes('time'))
               .forEach(([key, value], index) => {
                 const gaugeData = [{
                   type: "indicator",
@@ -74,8 +83,12 @@ router.get("/dashboard", async (req, res) => {
                     font: { size: 22 }
                   },
                   gauge: {
-                    axis: { range: [0, 100] },
-                    bar: { color: "#1f77b4" },
+                    axis: { range: [0, 1000] },
+                    bar: { 
+                      color: key.toLowerCase().includes('total') ? "#1f77b4" :  // Blue for Total
+                            key.toLowerCase().includes('fallback') ? "#2ca02c" : // Green for Fallback
+                            "#9370db" // Purple for Cache
+                    },
                     bgcolor: "white",
                     borderwidth: 2,
                     bordercolor: "#ccc",
@@ -90,6 +103,39 @@ router.get("/dashboard", async (req, res) => {
                 
                 Plotly.newPlot("gauge" + (index + 1), gaugeData, layout);
               });
+
+            // Create time-based gauge charts
+            const timeMetrics = {
+              'aveFallbackRequestTimeLastHour': data.aveFallbackRequestTimeLastHour || 0,
+              'aveCacheRequestTimeLastHour': data.aveCacheRequestTimeLastHour || 0
+            };
+
+            Object.entries(timeMetrics).forEach(([key, value], index) => {
+              const gaugeData = [{
+                type: "indicator",
+                mode: "gauge+number",
+                value: value,
+                title: { 
+                  text: formatMetricName(key),
+                  font: { size: 22 }
+                },
+                gauge: {
+                  axis: { range: [0, 300] },  // Range for milliseconds
+                  bar: { color: key.toLowerCase().includes('fallback') ? "#2ca02c" : "#9370db" }, // Green for Fallback, Purple for Cache
+                  bgcolor: "white",
+                  borderwidth: 2,
+                  bordercolor: "#ccc",
+                }
+              }];
+              
+              const layout = {
+                margin: { t: 50, b: 25, l: 25, r: 25 },
+                paper_bgcolor: "white",
+                font: { size: 12 }
+              };
+              
+              Plotly.newPlot("timeGauge" + (index + 1), gaugeData, layout);
+            });
 
             // Create error gauge charts
             const errorMetrics = {
@@ -108,7 +154,7 @@ router.get("/dashboard", async (req, res) => {
                 },
                 gauge: {
                   axis: { range: [0, 50] },  // Adjusted range for error metrics
-                  bar: { color: "#d62728" }, // Red color for errors
+                  bar: { color: key.toLowerCase().includes('fallback') ? "#2ca02c" : "#9370db" }, // Green for Fallback, Purple for Cache
                   bgcolor: "white",
                   borderwidth: 2,
                   bordercolor: "#ccc",
