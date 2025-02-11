@@ -1,12 +1,24 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
+const https = require('https');
 
 const ITEMS_PER_PAGE = 30;
 
+// Create an HTTPS agent that accepts self-signed certificates
+const httpsAgent = new https.Agent({
+  rejectUnauthorized: false
+});
+
 async function fetchLogs(url) {
   try {
-    const response = await axios.get(`http://localhost:3001${url}`);
+    // USE HTTP FOR NOW
+    const response = await axios.get(`http://localhost:3001${url}`, {
+      httpsAgent,
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
     const logs = Array.isArray(response.data) ? response.data : [];
     
     return logs

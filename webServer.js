@@ -7,6 +7,17 @@ const app = express();
 
 const { webServerPort } = require('./config');
 
+https.globalAgent.options.ca = require("ssl-root-cas").create(); // For sql connection
+
+// Set up middleware first
+app.use(bodyParser.json());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Then mount routes
 const fallbackUrlRouter = require('./routes/fallbackurl');
 const logsRouter = require('./routes/logs');
 const dashboardRouter = require('./routes/dashboard');
@@ -14,15 +25,6 @@ const dashboardRouter = require('./routes/dashboard');
 app.use(fallbackUrlRouter);
 app.use(logsRouter);
 app.use(dashboardRouter);
-
-https.globalAgent.options.ca = require("ssl-root-cas").create(); // For sql connection
-
-app.use(bodyParser.json());
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
 
 // Create the HTTPS server
 const server = https.createServer(
