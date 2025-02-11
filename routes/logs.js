@@ -129,7 +129,8 @@ router.get("/logs", async (req, res) => {
   try {
     const currentPage = parseInt(req.query.page) || 1;
     const filter = req.query.filter || 'all';
-    let [fallbackLogs, cacheLogs] = await Promise.all([
+    let [poolLogs, fallbackLogs, cacheLogs] = await Promise.all([
+      fetchLogs('/poolRequests'),
       fetchLogs('/fallbackRequests'),
       fetchLogs('/cacheRequests')
     ]);
@@ -140,16 +141,31 @@ router.get("/logs", async (req, res) => {
         ? log => log.status.toLowerCase() === 'success'
         : log => log.status.toLowerCase() !== 'success';
       
+      poolLogs = poolLogs.filter(filterFn);
       fallbackLogs = fallbackLogs.filter(filterFn);
       cacheLogs = cacheLogs.filter(filterFn);
     }
 
     // If it's an AJAX request for a specific table, return only the updated parts
     if (req.query.tableId) {
-      const logs = req.query.tableId === 'fallbackLogs' ? fallbackLogs : cacheLogs;
-      const title = req.query.tableId === 'fallbackLogs' ? 
-        'Fallback Request Logs' : 
-        'Cache Request Logs';
+      let logs;
+      let title;
+      
+      switch(req.query.tableId) {
+        case 'poolLogs':
+          logs = poolLogs;
+          title = 'Pool Request Logs';
+          break;
+        case 'fallbackLogs':
+          logs = fallbackLogs;
+          title = 'Fallback Request Logs';
+          break;
+        case 'cacheLogs':
+          logs = cacheLogs;
+          title = 'Cache Request Logs';
+          break;
+      }
+      
       const rendered = renderTable(logs, title, currentPage, req.query.tableId, true);
       res.setHeader('Content-Type', 'application/json');
       return res.json(rendered);
@@ -212,20 +228,26 @@ router.get("/logs", async (req, res) => {
             }
           </style>
           <script>
+            let poolCurrentPage = 1;
             let fallbackCurrentPage = 1;
             let cacheCurrentPage = 1;
+            let poolCurrentFilter = 'all';
             let fallbackCurrentFilter = 'all';
             let cacheCurrentFilter = 'all';
 
             async function changePage(tableId, page) {
               try {
-                if (tableId === 'fallbackLogs') {
+                if (tableId === 'poolLogs') {
+                  poolCurrentPage = page;
+                } else if (tableId === 'fallbackLogs') {
                   fallbackCurrentPage = page;
                 } else {
                   cacheCurrentPage = page;
                 }
 
-                const filter = tableId === 'fallbackLogs' ? fallbackCurrentFilter : cacheCurrentFilter;
+                const filter = tableId === 'poolLogs' ? poolCurrentFilter : 
+                             tableId === 'fallbackLogs' ? fallbackCurrentFilter : 
+                             cacheCurrentFilter;
                 const response = await fetch(\`/logs?page=\${page}&tableId=\${tableId}&filter=\${filter}\`, {
                   headers: {
                     'Accept': 'application/json'
@@ -244,7 +266,10 @@ router.get("/logs", async (req, res) => {
             async function filterLogs(tableId, filter) {
               try {
                 // Update filter state
-                if (tableId === 'fallbackLogs') {
+                if (tableId === 'poolLogs') {
+                  poolCurrentFilter = filter;
+                  poolCurrentPage = 1;
+                } else if (tableId === 'fallbackLogs') {
                   fallbackCurrentFilter = filter;
                   fallbackCurrentPage = 1;
                 } else {
@@ -279,6 +304,7 @@ router.get("/logs", async (req, res) => {
         </head>
         <body>
           <h1>RPC Logs</h1>
+          ${renderTable(poolLogs, 'Pool Request Logs', currentPage, 'poolLogs')}
           ${renderTable(fallbackLogs, 'Fallback Request Logs', currentPage, 'fallbackLogs')}
           ${renderTable(cacheLogs, 'Cache Request Logs', currentPage, 'cacheLogs')}
         </body>

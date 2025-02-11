@@ -37,6 +37,9 @@ router.get("/dashboard", async (req, res) => {
               <div id="gauge1" class="gauge"></div>
               <div id="gauge2" class="gauge"></div>
               <div id="gauge3" class="gauge"></div>
+              <div id="gauge4" class="gauge"></div>
+              <div id="gauge5" class="gauge"></div>
+              <div id="gauge6" class="gauge"></div>
             </div>
           </div>
 
@@ -45,6 +48,7 @@ router.get("/dashboard", async (req, res) => {
             <div class="dashboard">
               <div id="timeGauge1" class="gauge"></div>
               <div id="timeGauge2" class="gauge"></div>
+              <div id="timeGauge3" class="gauge"></div>
             </div>
           </div>
 
@@ -53,6 +57,7 @@ router.get("/dashboard", async (req, res) => {
             <div class="dashboard">
               <div id="errorGauge1" class="gauge"></div>
               <div id="errorGauge2" class="gauge"></div>
+              <div id="errorGauge3" class="gauge"></div>
             </div>
           </div>
           
@@ -70,10 +75,18 @@ router.get("/dashboard", async (req, res) => {
                 .join(' ');
             }
             
-            // Create performance gauge charts
-            Object.entries(data)
-              .filter(([key]) => !key.toLowerCase().includes('error') && !key.toLowerCase().includes('time'))
-              .forEach(([key, value], index) => {
+            // Define the order of performance metrics
+            const orderedMetrics = [
+              'nTotalRequestsLastHour',
+              'nCacheRequestsLastHour',
+              'nPoolRequestsLastHour',
+              'nFallbackRequestsLastHour'
+            ];
+
+            // Create performance gauge charts in specified order
+            orderedMetrics.forEach((key, index) => {
+              if (key in data) {
+                const value = data[key];
                 const gaugeData = [{
                   type: "indicator",
                   mode: "gauge+number",
@@ -85,9 +98,10 @@ router.get("/dashboard", async (req, res) => {
                   gauge: {
                     axis: { range: [0, 1000] },
                     bar: { 
-                      color: key.toLowerCase().includes('total') ? "#1f77b4" :  // Blue for Total
-                            key.toLowerCase().includes('fallback') ? "#2ca02c" : // Green for Fallback
-                            "#9370db" // Purple for Cache
+                      color: key.toLowerCase().includes('total') ? "#1f77b4" :    // Blue for Total
+                            key.toLowerCase().includes('cache') ? "#9370db" :     // Purple for Cache
+                            key.toLowerCase().includes('pool') ? "#ff7f0e" :      // Orange for Pool
+                            "#2ca02c"                                            // Green for Fallback
                     },
                     bgcolor: "white",
                     borderwidth: 2,
@@ -102,15 +116,18 @@ router.get("/dashboard", async (req, res) => {
                 };
                 
                 Plotly.newPlot("gauge" + (index + 1), gaugeData, layout);
-              });
+              }
+            });
 
             // Create time-based gauge charts
-            const timeMetrics = {
-              'aveFallbackRequestTimeLastHour': data.aveFallbackRequestTimeLastHour || 0,
-              'aveCacheRequestTimeLastHour': data.aveCacheRequestTimeLastHour || 0
-            };
+            const timeMetrics = [
+              'aveCacheRequestTimeLastHour',
+              'avePoolRequestTimeLastHour',
+              'aveFallbackRequestTimeLastHour'
+            ];
 
-            Object.entries(timeMetrics).forEach(([key, value], index) => {
+            timeMetrics.forEach((key, index) => {
+              const value = data[key] || 0;
               const gaugeData = [{
                 type: "indicator",
                 mode: "gauge+number",
@@ -121,7 +138,11 @@ router.get("/dashboard", async (req, res) => {
                 },
                 gauge: {
                   axis: { range: [0, 300] },  // Range for milliseconds
-                  bar: { color: key.toLowerCase().includes('fallback') ? "#2ca02c" : "#9370db" }, // Green for Fallback, Purple for Cache
+                  bar: { 
+                    color: key.toLowerCase().includes('cache') ? "#9370db" :     // Purple for Cache
+                           key.toLowerCase().includes('pool') ? "#ff7f0e" :      // Orange for Pool
+                           "#2ca02c"                                            // Green for Fallback
+                  },
                   bgcolor: "white",
                   borderwidth: 2,
                   bordercolor: "#ccc",
@@ -138,12 +159,14 @@ router.get("/dashboard", async (req, res) => {
             });
 
             // Create error gauge charts
-            const errorMetrics = {
-              'nErrorFallbackRequestsLastHour': data.nErrorFallbackRequestsLastHour || 0,
-              'nErrorCacheRequestsLastHour': data.nErrorCacheRequestsLastHour || 0
-            };
+            const errorMetrics = [
+              'nErrorCacheRequestsLastHour',
+              'nErrorPoolRequestsLastHour',
+              'nErrorFallbackRequestsLastHour'
+            ];
 
-            Object.entries(errorMetrics).forEach(([key, value], index) => {
+            errorMetrics.forEach((key, index) => {
+              const value = data[key] || 0;
               const gaugeData = [{
                 type: "indicator",
                 mode: "gauge+number",
@@ -154,7 +177,11 @@ router.get("/dashboard", async (req, res) => {
                 },
                 gauge: {
                   axis: { range: [0, 50] },  // Adjusted range for error metrics
-                  bar: { color: key.toLowerCase().includes('fallback') ? "#2ca02c" : "#9370db" }, // Green for Fallback, Purple for Cache
+                  bar: { 
+                    color: key.toLowerCase().includes('cache') ? "#9370db" :     // Purple for Cache
+                           key.toLowerCase().includes('pool') ? "#ff7f0e" :      // Orange for Pool
+                           "#2ca02c"                                            // Green for Fallback
+                  },
                   bgcolor: "white",
                   borderwidth: 2,
                   bordercolor: "#ccc",
