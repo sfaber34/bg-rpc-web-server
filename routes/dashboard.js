@@ -32,14 +32,18 @@ router.get("/dashboard", async (req, res) => {
           <h1>RPC Dashboard</h1>
           
           <div class="dashboard-section">
-            <h2>Performance Metrics</h2>
+            <h2>Total Requests</h2>
             <div class="dashboard">
-              <div id="gauge1" class="gauge"></div>
+              <div id="totalGauge" class="gauge"></div>
+            </div>
+          </div>
+
+          <div class="dashboard-section">
+            <h2>Request Source Metrics</h2>
+            <div class="dashboard">
               <div id="gauge2" class="gauge"></div>
               <div id="gauge3" class="gauge"></div>
               <div id="gauge4" class="gauge"></div>
-              <div id="gauge5" class="gauge"></div>
-              <div id="gauge6" class="gauge"></div>
             </div>
           </div>
 
@@ -77,14 +81,47 @@ router.get("/dashboard", async (req, res) => {
             
             // Define the order of performance metrics
             const orderedMetrics = [
-              'nTotalRequestsLastHour',
+              'nTotalRequestsLastHour'
+            ];
+
+            // Create total requests gauge
+            if ('nTotalRequestsLastHour' in data) {
+              const value = data['nTotalRequestsLastHour'];
+              const gaugeData = [{
+                type: "indicator",
+                mode: "gauge+number",
+                value: value,
+                title: { 
+                  text: formatMetricName('nTotalRequestsLastHour'),
+                  font: { size: 22 }
+                },
+                gauge: {
+                  axis: { range: [0, 1000] },
+                  bar: { color: "#1f77b4" },    // Blue for Total
+                  bgcolor: "white",
+                  borderwidth: 2,
+                  bordercolor: "#ccc",
+                }
+              }];
+              
+              const layout = {
+                margin: { t: 50, b: 25, l: 25, r: 25 },
+                paper_bgcolor: "white",
+                font: { size: 12 }
+              };
+              
+              Plotly.newPlot("totalGauge", gaugeData, layout);
+            }
+
+            // Define source metrics
+            const sourceMetrics = [
               'nCacheRequestsLastHour',
               'nPoolRequestsLastHour',
               'nFallbackRequestsLastHour'
             ];
 
-            // Create performance gauge charts in specified order
-            orderedMetrics.forEach((key, index) => {
+            // Create source metrics gauge charts
+            sourceMetrics.forEach((key, index) => {
               if (key in data) {
                 const value = data[key];
                 const gaugeData = [{
@@ -98,8 +135,7 @@ router.get("/dashboard", async (req, res) => {
                   gauge: {
                     axis: { range: [0, 1000] },
                     bar: { 
-                      color: key.toLowerCase().includes('total') ? "#1f77b4" :    // Blue for Total
-                            key.toLowerCase().includes('cache') ? "#9370db" :     // Purple for Cache
+                      color: key.toLowerCase().includes('cache') ? "#9370db" :     // Purple for Cache
                             key.toLowerCase().includes('pool') ? "#ff7f0e" :      // Orange for Pool
                             "#2ca02c"                                            // Green for Fallback
                     },
@@ -115,7 +151,7 @@ router.get("/dashboard", async (req, res) => {
                   font: { size: 12 }
                 };
                 
-                Plotly.newPlot("gauge" + (index + 1), gaugeData, layout);
+                Plotly.newPlot("gauge" + (index + 2), gaugeData, layout);
               }
             });
 
