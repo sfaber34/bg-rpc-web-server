@@ -26,7 +26,7 @@ router.get("/dashboard", async (req, res) => {
             }
             .dashboard { display: flex; flex-wrap: wrap; gap: 20px; }
             .gauge { flex: 1; min-width: 300px; height: 300px; }
-            .hist-plot { width: 100%; height: 500px; margin-bottom: 20px; }
+            .hist-plot { width: 100%; height: 800px; margin-bottom: 20px; }
             h1 { padding: 0px 20px; }
           </style>
         </head>
@@ -246,28 +246,57 @@ router.get("/dashboard", async (req, res) => {
             console.log('Method Duration Histogram:', data.methodDurationHist);
             console.log('Origin Duration Histogram:', data.originDurationHist);
 
-            if (data.methodDurationHist) {
-              const methodTrace = {
-                type: 'box',
-                x: [],
-                y: [],
-                boxpoints: false,
-                name: 'Method Duration',
-                marker: {
-                  color: '#1f77b4'
-                }
-              };
+            // Define a color palette for the traces
+            const colors = [
+              'rgba(31, 119, 180, 0.5)',  // blue
+              'rgba(255, 127, 14, 0.5)',  // orange
+              'rgba(44, 160, 44, 0.5)',   // green
+              'rgba(214, 39, 40, 0.5)',   // red
+              'rgba(148, 103, 189, 0.5)', // purple
+              'rgba(140, 86, 75, 0.5)',   // brown
+              'rgba(227, 119, 194, 0.5)', // pink
+              'rgba(127, 127, 127, 0.5)', // gray
+              'rgba(188, 189, 34, 0.5)',  // yellow-green
+              'rgba(23, 190, 207, 0.5)'   // cyan
+            ];
 
-              // For each method, add the method name multiple times (once for each percentile)
-              // and add the corresponding percentile values
-              Object.entries(data.methodDurationHist).forEach(([method, distribution]) => {
-                // Add the method name 5 times (one for each percentile)
-                methodTrace.x.push(...Array(5).fill(method));
-                // Add the percentile values
-                methodTrace.y.push(...Object.values(distribution));
+            // Define solid colors for lines
+            const solidColors = [
+              'rgb(31, 119, 180)',  // blue
+              'rgb(255, 127, 14)',  // orange
+              'rgb(44, 160, 44)',   // green
+              'rgb(214, 39, 40)',   // red
+              'rgb(148, 103, 189)', // purple
+              'rgb(140, 86, 75)',   // brown
+              'rgb(227, 119, 194)', // pink
+              'rgb(127, 127, 127)', // gray
+              'rgb(188, 189, 34)',  // yellow-green
+              'rgb(23, 190, 207)'   // cyan
+            ];
+
+            if (data.methodDurationHist) {
+              const methodTraces = Object.entries(data.methodDurationHist).map(([method, distribution], index) => {
+                const color = colors[index % colors.length];
+                const solidColor = solidColors[index % solidColors.length];
+                return {
+                  type: 'box',
+                  x: Array(5).fill(method),
+                  y: Object.values(distribution),
+                  name: method,
+                  boxpoints: false,
+                  fillcolor: color,
+                  line: {
+                    width: 2,
+                    color: solidColor
+                  },
+                  median: {
+                    color: 'rgb(0,0,0)',
+                    width: 8
+                  }
+                };
               });
 
-              console.log('Method Trace:', methodTrace);
+              console.log('Method Traces:', methodTraces);
 
               const methodLayout = {
                 title: {
@@ -276,43 +305,48 @@ router.get("/dashboard", async (req, res) => {
                 },
                 xaxis: {
                   title: 'Method',
-                  tickangle: -45
+                  tickangle: -45,
+                  tickfont: {
+                    size: 12
+                  }
                 },
                 yaxis: {
                   title: 'Duration (ms)',
-                  type: 'log'  // Using log scale since durations can vary widely
+                  type: 'linear'
                 },
-                margin: { t: 50, b: 120, l: 50, r: 25 },  // Increased bottom margin for rotated labels
+                margin: { t: 50, b: 120, l: 50, r: 25 },
                 paper_bgcolor: "white",
+                plot_bgcolor: "white",
                 font: { size: 12 },
                 showlegend: false
               };
 
-              Plotly.newPlot('methodDurationHist', [methodTrace], methodLayout);
+              Plotly.newPlot('methodDurationHist', methodTraces, methodLayout);
             }
 
             if (data.originDurationHist) {
-              const originTrace = {
-                type: 'box',
-                x: [],
-                y: [],
-                boxpoints: false,
-                name: 'Origin Duration',
-                marker: {
-                  color: '#ff7f0e'
-                }
-              };
-
-              // For each origin, add the origin name multiple times (once for each percentile)
-              // and add the corresponding percentile values
-              Object.entries(data.originDurationHist).forEach(([origin, distribution]) => {
-                // Add the origin name 5 times (one for each percentile)
-                originTrace.x.push(...Array(5).fill(origin));
-                // Add the percentile values
-                originTrace.y.push(...Object.values(distribution));
+              const originTraces = Object.entries(data.originDurationHist).map(([origin, distribution], index) => {
+                const color = colors[index % colors.length];
+                const solidColor = solidColors[index % solidColors.length];
+                return {
+                  type: 'box',
+                  x: Array(5).fill(origin),
+                  y: Object.values(distribution),
+                  name: origin,
+                  boxpoints: false,
+                  fillcolor: color,
+                  line: {
+                    width: 2,
+                    color: solidColor
+                  },
+                  median: {
+                    color: 'rgb(0,0,0)',
+                    width: 8
+                  }
+                };
               });
 
-              console.log('Origin Trace:', originTrace);
+              console.log('Origin Traces:', originTraces);
 
               const originLayout = {
                 title: {
@@ -321,19 +355,23 @@ router.get("/dashboard", async (req, res) => {
                 },
                 xaxis: {
                   title: 'Origin',
-                  tickangle: -45
+                  tickangle: -45,
+                  tickfont: {
+                    size: 12
+                  }
                 },
                 yaxis: {
                   title: 'Duration (ms)',
-                  type: 'log'  // Using log scale since durations can vary widely
+                  type: 'linear'
                 },
-                margin: { t: 50, b: 120, l: 50, r: 25 },  // Increased bottom margin for rotated labels
+                margin: { t: 50, b: 120, l: 50, r: 25 },
                 paper_bgcolor: "white",
+                plot_bgcolor: "white",
                 font: { size: 12 },
                 showlegend: false
               };
 
-              Plotly.newPlot('originDurationHist', [originTrace], originLayout);
+              Plotly.newPlot('originDurationHist', originTraces, originLayout);
             }
           </script>
         </body>
