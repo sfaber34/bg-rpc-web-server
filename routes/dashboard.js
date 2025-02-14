@@ -304,8 +304,9 @@ router.get("/dashboard", async (req, res) => {
                   font: { size: 22 }
                 },
                 xaxis: {
-                  title: 'Method',
+                  title: '',
                   tickangle: -45,
+                  showticklabels: false,
                   tickfont: {
                     size: 12
                   }
@@ -314,6 +315,21 @@ router.get("/dashboard", async (req, res) => {
                   title: 'Duration (ms)',
                   type: 'linear'
                 },
+                annotations: Object.keys(data.methodDurationHist).map((method, index) => ({
+                  x: method,
+                  y: -0.1,
+                  text: method,
+                  textangle: -45,
+                  showarrow: false,
+                  xanchor: 'right',
+                  yanchor: 'middle',
+                  font: {
+                    size: 12,
+                    color: solidColors[index % solidColors.length]
+                  },
+                  xref: 'x',
+                  yref: 'paper'
+                })),
                 margin: { t: 50, b: 120, l: 50, r: 25 },
                 paper_bgcolor: "white",
                 plot_bgcolor: "white",
@@ -354,8 +370,9 @@ router.get("/dashboard", async (req, res) => {
                   font: { size: 22 }
                 },
                 xaxis: {
-                  title: 'Origin',
+                  title: '',
                   tickangle: -45,
+                  showticklabels: false,
                   tickfont: {
                     size: 12
                   }
@@ -364,6 +381,21 @@ router.get("/dashboard", async (req, res) => {
                   title: 'Duration (ms)',
                   type: 'linear'
                 },
+                annotations: Object.keys(data.originDurationHist).map((origin, index) => ({
+                  x: origin,
+                  y: -0.1,
+                  text: origin,
+                  textangle: -45,
+                  showarrow: false,
+                  xanchor: 'right',
+                  yanchor: 'middle',
+                  font: {
+                    size: 12,
+                    color: solidColors[index % solidColors.length]
+                  },
+                  xref: 'x',
+                  yref: 'paper'
+                })),
                 margin: { t: 50, b: 120, l: 50, r: 25 },
                 paper_bgcolor: "white",
                 plot_bgcolor: "white",
