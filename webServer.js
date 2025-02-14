@@ -21,10 +21,12 @@ app.use(cors({
 const fallbackUrlRouter = require('./routes/fallbackurl');
 const logsRouter = require('./routes/logs');
 const dashboardRouter = require('./routes/dashboard');
+const activeNodesRouter = require('./routes/activenodes');
 
 app.use(fallbackUrlRouter);
 app.use(logsRouter);
 app.use(dashboardRouter);
+app.use(activeNodesRouter);
 
 // Create the HTTPS server
 const server = https.createServer(
