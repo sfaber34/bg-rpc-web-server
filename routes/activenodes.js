@@ -52,7 +52,7 @@ function generateTable(poolNodes) {
           <th style="padding: 12px;">Peers</th>
           <th style="padding: 12px;">Git Info</th>
           <th style="padding: 12px;">Peer Details</th>
-          <th style="padding: 12px;">Consensus Ports</th>
+          <th style="padding: 12px;">Ports</th>
           <th style="padding: 12px;">Socket ID</th>
         </tr>
       </thead>
@@ -101,8 +101,8 @@ function generateTable(poolNodes) {
           </details>
         </td>
         <td style="padding: 8px;">
-          TCP: ${data.consensus_tcp_port || 'N/A'}<br>
-          UDP: ${data.consensus_udp_port || 'N/A'}
+          EP: ${data.enode ? data.enode.split(':').pop() : 'N/A'}<br>
+          CP: ${data.consensus_tcp_port || 'N/A'}, ${data.consensus_udp_port || 'N/A'}
         </td>
         <td style="padding: 8px;">
           ${data.socket_id?.id || 'N/A'}
