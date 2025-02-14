@@ -176,7 +176,7 @@ router.get("/logs", async (req, res) => {
         <head>
           <title>RPC Logs</title>
           <style>
-            body { padding: 20px; font-family: Arial, sans-serif; }
+            body { font-family: Arial, sans-serif; }
             table { font-size: 14px; width: 100%; }
             th, td { padding: 8px; text-align: left; }
             h1 { margin-bottom: 30px; }
@@ -303,7 +303,7 @@ router.get("/logs", async (req, res) => {
           </script>
         </head>
         <body>
-          <h1>RPC Logs</h1>
+          <h1>Logs</h1>
           ${renderTable(poolLogs, 'Pool Request Logs', currentPage, 'poolLogs')}
           ${renderTable(fallbackLogs, 'Fallback Request Logs', currentPage, 'fallbackLogs')}
           ${renderTable(cacheLogs, 'Cache Request Logs', currentPage, 'cacheLogs')}

@@ -16,8 +16,8 @@ router.get("/dashboard", async (req, res) => {
           <title>RPC Dashboard</title>
           <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
           <style>
-            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-            .dashboard-section { margin-bottom: 30px; }
+            body { font-family: Arial, sans-serif; margin: 0; }
+            .dashboard-section { margin-bottom: 30px; padding: 0px 20px; }
             .dashboard-section h2 { 
               color: #333;
               margin-bottom: 15px;
@@ -26,10 +26,11 @@ router.get("/dashboard", async (req, res) => {
             }
             .dashboard { display: flex; flex-wrap: wrap; gap: 20px; }
             .gauge { flex: 1; min-width: 300px; height: 300px; }
+            h1 { padding: 0px 20px; }
           </style>
         </head>
         <body>
-          <h1>RPC Dashboard</h1>
+          <h1>Dashboard</h1>
           
           <div class="dashboard-section">
             <h2>Total Requests</h2>

@@ -17,6 +17,36 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// Add navigation bar middleware
+app.use((req, res, next) => {
+  // Store the original send function
+  const originalSend = res.send;
+  
+  // Override the send function
+  res.send = function (body) {
+    // Only modify HTML responses
+    if (typeof body === 'string' && body.includes('<html')) {
+      // Create navigation bar HTML
+      const navBar = `
+        <div style="background-color: #f8f9fa; padding: 10px; margin-bottom: 20px;">
+          <a href="/dashboard" style="margin-right: 15px; color: #333; text-decoration: none;">Dashboard</a>
+          <a href="/logs" style="margin-right: 15px; color: #333; text-decoration: none;">Logs</a>
+          <a href="/activenodes" style="margin-right: 15px; color: #333; text-decoration: none;">Active Nodes</a>
+          <a href="/fallbackurl" style="color: #333; text-decoration: none;">Fallback URL</a>
+        </div>
+      `;
+      
+      // Insert navigation bar after the body tag
+      body = body.replace('<body>', '<body>' + navBar);
+    }
+    
+    // Call the original send function
+    return originalSend.call(this, body);
+  };
+  
+  next();
+});
+
 // Then mount routes
 const fallbackUrlRouter = require('./routes/fallbackurl');
 const logsRouter = require('./routes/logs');
@@ -27,6 +57,11 @@ app.use(fallbackUrlRouter);
 app.use(logsRouter);
 app.use(dashboardRouter);
 app.use(activeNodesRouter);
+
+// Add root redirect to dashboard
+app.get('/', (req, res) => {
+  res.redirect('/dashboard');
+});
 
 // Create the HTTPS server
 const server = https.createServer(
