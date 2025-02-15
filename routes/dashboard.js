@@ -241,11 +241,6 @@ router.get("/dashboard", async (req, res) => {
               Plotly.newPlot("errorGauge" + (index + 1), gaugeData, layout);
             });
 
-            // Create histogram bar charts for duration distributions
-            console.log('Full dashboard data:', data);
-            console.log('Method Duration Histogram:', data.methodDurationHist);
-            console.log('Origin Duration Histogram:', data.originDurationHist);
-
             // Define a color palette for the traces
             const colors = [
               'rgba(31, 119, 180, 0.5)',  // blue
@@ -295,8 +290,6 @@ router.get("/dashboard", async (req, res) => {
                   }
                 };
               });
-
-              console.log('Method Traces:', methodTraces);
 
               const methodLayout = {
                 title: {
@@ -361,8 +354,6 @@ router.get("/dashboard", async (req, res) => {
                   }
                 };
               });
-
-              console.log('Origin Traces:', originTraces);
 
               const originLayout = {
                 title: {
