@@ -90,7 +90,7 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
     // For AJAX requests, only return the table body and pagination
     return {
       tbody: pageData.map(log => isPoolNodeLogs ? `
-        <tr>
+        <tr${log.status.toLowerCase() !== 'success' ? ' class="error"' : ''}>
           <td>${log.timestamp}</td>
           <td>${log.nodeId}</td>
           <td>${log.owner}</td>
@@ -100,7 +100,7 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
           <td>${log.status}</td>
         </tr>
       ` : `
-        <tr>
+        <tr${log.status.toLowerCase() !== 'success' ? ' class="error"' : ''}>
           <td>${log.timestamp}</td>
           <td>${log.origin}</td>
           <td>${log.method}</td>
@@ -145,7 +145,7 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
         </thead>
         <tbody id="${tableId}-body">
           ${pageData.map(log => isPoolNodeLogs ? `
-            <tr>
+            <tr${log.status.toLowerCase() !== 'success' ? ' class="error"' : ''}>
               <td>${log.timestamp}</td>
               <td>${log.nodeId}</td>
               <td>${log.owner}</td>
@@ -155,7 +155,7 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
               <td>${log.status}</td>
             </tr>
           ` : `
-            <tr>
+            <tr${log.status.toLowerCase() !== 'success' ? ' class="error"' : ''}>
               <td>${log.timestamp}</td>
               <td>${log.origin}</td>
               <td>${log.method}</td>
@@ -237,6 +237,8 @@ router.get("/logs", async (req, res) => {
             h2 { color: #333; margin-bottom: 15px; }
             tr:nth-child(even) { background-color: #f9f9f9; }
             tr:hover { background-color: #f5f5f5; }
+            tr.error { background-color: #ffebee; }
+            tr.error:hover { background-color: #ffe5e8; }
             .pagination { 
               display: flex;
               justify-content: center;
