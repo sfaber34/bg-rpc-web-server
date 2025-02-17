@@ -24,7 +24,7 @@ async function fetchLogs(url) {
     return logs
       .map(log => ({
         timestamp: log.timestamp,
-        origin: log.requester,
+        origin: log.requester || '',
         method: log.method,
         params: log.params,
         duration: log.elapsed,
@@ -33,6 +33,22 @@ async function fetchLogs(url) {
       .reverse(); // Reverse the order so newest entries are first
   } catch (error) {
     console.error(`Error fetching logs from ${url}:`, error);
+    return [];
+  }
+}
+
+async function fetchPoolNodeLogs() {
+  try {
+    const response = await axios.get('http://localhost:3001/poolNodes', {
+      httpsAgent,
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+    const logs = Array.isArray(response.data) ? response.data : [];
+    return logs.reverse(); // Reverse the order so newest entries are first
+  } catch (error) {
+    console.error('Error fetching pool node logs:', error);
     return [];
   }
 }
@@ -68,10 +84,22 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
   const totalPages = Math.ceil(logs.length / ITEMS_PER_PAGE);
   const pageData = logs.slice(startIndex, endIndex);
 
+  const isPoolNodeLogs = tableId === 'poolNodeLogs';
+  
   if (isAjax) {
     // For AJAX requests, only return the table body and pagination
     return {
-      tbody: pageData.map(log => `
+      tbody: pageData.map(log => isPoolNodeLogs ? `
+        <tr>
+          <td>${log.timestamp}</td>
+          <td>${log.nodeId}</td>
+          <td>${log.owner}</td>
+          <td>${log.method}</td>
+          <td>${log.params}</td>
+          <td>${log.duration}</td>
+          <td>${log.status}</td>
+        </tr>
+      ` : `
         <tr>
           <td>${log.timestamp}</td>
           <td>${log.origin}</td>
@@ -97,16 +125,36 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
       <table border="1" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
         <thead>
           <tr style="background-color: #f2f2f2;">
+            ${isPoolNodeLogs ? `
+            <th>Timestamp</th>
+            <th>Node ID</th>
+            <th>Owner</th>
+            <th>Method</th>
+            <th>Params</th>
+            <th>Duration (ms)</th>
+            <th>Status</th>
+            ` : `
             <th>Timestamp</th>
             <th>Origin</th>
             <th>Method</th>
             <th>Params</th>
             <th>Duration (ms)</th>
             <th>Status</th>
+            `}
           </tr>
         </thead>
         <tbody id="${tableId}-body">
-          ${pageData.map(log => `
+          ${pageData.map(log => isPoolNodeLogs ? `
+            <tr>
+              <td>${log.timestamp}</td>
+              <td>${log.nodeId}</td>
+              <td>${log.owner}</td>
+              <td>${log.method}</td>
+              <td>${log.params}</td>
+              <td>${log.duration}</td>
+              <td>${log.status}</td>
+            </tr>
+          ` : `
             <tr>
               <td>${log.timestamp}</td>
               <td>${log.origin}</td>
@@ -129,10 +177,11 @@ router.get("/logs", async (req, res) => {
   try {
     const currentPage = parseInt(req.query.page) || 1;
     const filter = req.query.filter || 'all';
-    let [poolLogs, fallbackLogs, cacheLogs] = await Promise.all([
+    let [poolLogs, fallbackLogs, cacheLogs, poolNodeLogs] = await Promise.all([
       fetchLogs('/poolRequests'),
       fetchLogs('/fallbackRequests'),
-      fetchLogs('/cacheRequests')
+      fetchLogs('/cacheRequests'),
+      fetchPoolNodeLogs()
     ]);
 
     // Apply filters if needed
@@ -144,6 +193,7 @@ router.get("/logs", async (req, res) => {
       poolLogs = poolLogs.filter(filterFn);
       fallbackLogs = fallbackLogs.filter(filterFn);
       cacheLogs = cacheLogs.filter(filterFn);
+      poolNodeLogs = poolNodeLogs.filter(filterFn);
     }
 
     // If it's an AJAX request for a specific table, return only the updated parts
@@ -163,6 +213,10 @@ router.get("/logs", async (req, res) => {
         case 'cacheLogs':
           logs = cacheLogs;
           title = 'Cache Request Logs';
+          break;
+        case 'poolNodeLogs':
+          logs = poolNodeLogs;
+          title = 'Pool Node Logs';
           break;
       }
       
@@ -303,10 +357,12 @@ router.get("/logs", async (req, res) => {
           </script>
         </head>
         <body>
-          <h1>Logs</h1>
+          <h1>Proxy Logs</h1>
           ${renderTable(poolLogs, 'Pool Request Logs', currentPage, 'poolLogs')}
           ${renderTable(fallbackLogs, 'Fallback Request Logs', currentPage, 'fallbackLogs')}
           ${renderTable(cacheLogs, 'Cache Request Logs', currentPage, 'cacheLogs')}
+          <h1>Pool Node Logs</h1>
+          ${renderTable(poolNodeLogs, 'Pool Node Logs', currentPage, 'poolNodeLogs')}
         </body>
       </html>
     `);
