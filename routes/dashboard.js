@@ -70,6 +70,7 @@ router.get("/dashboard", async (req, res) => {
           <div class="dashboard-section">
             <h2>Hourly Request History</h2>
             <div id="requestHistoryPlot" class="hist-plot"></div>
+            <div id="errorHistoryPlot" class="hist-plot"></div>
           </div>
 
           <div class="dashboard-section">
@@ -449,20 +450,13 @@ router.get("/dashboard", async (req, res) => {
                 }
               ];
 
-              const layout = {
-                title: {
-                  text: 'Successful Requests per Hour',
-                  font: { size: 22 }
-                },
+              // Define shared layout properties
+              const sharedLayoutConfig = {
                 xaxis: {
                   title: 'Time',
                   type: 'date',
                   tickformat: '%Y-%m-%d %H:%M',
                   tickangle: -45
-                },
-                yaxis: {
-                  title: 'Number of Requests',
-                  type: 'linear'
                 },
                 margin: { t: 50, b: 120, l: 50, r: 25 },
                 paper_bgcolor: "white",
@@ -475,7 +469,83 @@ router.get("/dashboard", async (req, res) => {
                 }
               };
 
-              Plotly.newPlot('requestHistoryPlot', traces, layout);
+              const successLayout = {
+                ...sharedLayoutConfig,
+                title: {
+                  text: 'Successful Requests per Hour',
+                  font: { size: 22 }
+                },
+                yaxis: {
+                  title: 'Number of Requests',
+                  type: 'linear'
+                }
+              };
+
+              Plotly.newPlot('requestHistoryPlot', traces, successLayout).then(gd => {
+                // Create error request history line plot with matching x-axis range
+                const errorTraces = [
+                  {
+                    name: 'Cache Errors',
+                    x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                    y: data.requestHistory.map(entry => entry.nCacheRequestsError),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: {
+                      color: '#9370db',  // Purple for Cache
+                      width: 2
+                    },
+                    marker: {
+                      size: 8
+                    }
+                  },
+                  {
+                    name: 'Pool Errors',
+                    x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                    y: data.requestHistory.map(entry => entry.nPoolRequestsError),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: {
+                      color: '#ff7f0e',  // Orange for Pool
+                      width: 2
+                    },
+                    marker: {
+                      size: 8
+                    }
+                  },
+                  {
+                    name: 'Fallback Errors',
+                    x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                    y: data.requestHistory.map(entry => entry.nFallbackRequestsError),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: {
+                      color: '#2ca02c',  // Green for Fallback
+                      width: 2
+                    },
+                    marker: {
+                      size: 8
+                    }
+                  }
+                ];
+
+                const errorLayout = {
+                  ...sharedLayoutConfig,
+                  title: {
+                    text: 'Error Requests per Hour',
+                    font: { size: 22 }
+                  },
+                  xaxis: {
+                    ...sharedLayoutConfig.xaxis,
+                    range: gd.layout.xaxis.range  // Use the range from the success plot
+                  },
+                  yaxis: {
+                    title: 'Number of Errors',
+                    type: 'linear'
+                  }
+                };
+
+                Plotly.newPlot('errorHistoryPlot', errorTraces, errorLayout);
+              });
             }
           </script>
         </body>
