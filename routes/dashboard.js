@@ -68,6 +68,11 @@ router.get("/dashboard", async (req, res) => {
           </div>
 
           <div class="dashboard-section">
+            <h2>Hourly Request History</h2>
+            <div id="requestHistoryPlot" class="hist-plot"></div>
+          </div>
+
+          <div class="dashboard-section">
             <h2>Request Duration Distribution</h2>
             <div id="methodDurationHist" class="hist-plot"></div>
             <div id="originDurationHist" class="hist-plot"></div>
@@ -395,6 +400,82 @@ router.get("/dashboard", async (req, res) => {
               };
 
               Plotly.newPlot('originDurationHist', originTraces, originLayout);
+            }
+
+            // Create request history line plot
+            if (data.requestHistory) {
+              const traces = [
+                {
+                  name: 'Cache Requests',
+                  x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                  y: data.requestHistory.map(entry => entry.nCacheRequestsSuccess),
+                  type: 'scatter',
+                  mode: 'lines+markers',
+                  line: {
+                    color: '#9370db',  // Purple for Cache
+                    width: 2
+                  },
+                  marker: {
+                    size: 8
+                  }
+                },
+                {
+                  name: 'Pool Requests',
+                  x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                  y: data.requestHistory.map(entry => entry.nPoolRequestsSuccess),
+                  type: 'scatter',
+                  mode: 'lines+markers',
+                  line: {
+                    color: '#ff7f0e',  // Orange for Pool
+                    width: 2
+                  },
+                  marker: {
+                    size: 8
+                  }
+                },
+                {
+                  name: 'Fallback Requests',
+                  x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                  y: data.requestHistory.map(entry => entry.nFallbackRequestsSuccess),
+                  type: 'scatter',
+                  mode: 'lines+markers',
+                  line: {
+                    color: '#2ca02c',  // Green for Fallback
+                    width: 2
+                  },
+                  marker: {
+                    size: 8
+                  }
+                }
+              ];
+
+              const layout = {
+                title: {
+                  text: 'Successful Requests per Hour',
+                  font: { size: 22 }
+                },
+                xaxis: {
+                  title: 'Time',
+                  type: 'date',
+                  tickformat: '%Y-%m-%d %H:%M',
+                  tickangle: -45
+                },
+                yaxis: {
+                  title: 'Number of Requests',
+                  type: 'linear'
+                },
+                margin: { t: 50, b: 120, l: 50, r: 25 },
+                paper_bgcolor: "white",
+                plot_bgcolor: "white",
+                font: { size: 12 },
+                showlegend: true,
+                legend: {
+                  orientation: 'h',
+                  y: -0.2
+                }
+              };
+
+              Plotly.newPlot('requestHistoryPlot', traces, layout);
             }
           </script>
         </body>
