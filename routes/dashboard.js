@@ -411,7 +411,7 @@ router.get("/dashboard", async (req, res) => {
                   x: data.requestHistory.map(entry => new Date(entry.hourMs)),
                   y: data.requestHistory.map(entry => entry.nCacheRequestsSuccess),
                   type: 'scatter',
-                  mode: 'lines+markers',
+                  mode: 'lines',
                   line: {
                     color: '#9370db',  // Purple for Cache
                     width: 2
@@ -425,7 +425,7 @@ router.get("/dashboard", async (req, res) => {
                   x: data.requestHistory.map(entry => new Date(entry.hourMs)),
                   y: data.requestHistory.map(entry => entry.nPoolRequestsSuccess),
                   type: 'scatter',
-                  mode: 'lines+markers',
+                  mode: 'lines',
                   line: {
                     color: '#ff7f0e',  // Orange for Pool
                     width: 2
@@ -439,7 +439,7 @@ router.get("/dashboard", async (req, res) => {
                   x: data.requestHistory.map(entry => new Date(entry.hourMs)),
                   y: data.requestHistory.map(entry => entry.nFallbackRequestsSuccess),
                   type: 'scatter',
-                  mode: 'lines+markers',
+                  mode: 'lines',
                   line: {
                     color: '#2ca02c',  // Green for Fallback
                     width: 2
@@ -489,7 +489,7 @@ router.get("/dashboard", async (req, res) => {
                     x: data.requestHistory.map(entry => new Date(entry.hourMs)),
                     y: data.requestHistory.map(entry => entry.nCacheRequestsError),
                     type: 'scatter',
-                    mode: 'lines+markers',
+                    mode: 'lines',
                     line: {
                       color: '#9370db',  // Purple for Cache
                       width: 2
@@ -503,7 +503,7 @@ router.get("/dashboard", async (req, res) => {
                     x: data.requestHistory.map(entry => new Date(entry.hourMs)),
                     y: data.requestHistory.map(entry => entry.nPoolRequestsError),
                     type: 'scatter',
-                    mode: 'lines+markers',
+                    mode: 'lines',
                     line: {
                       color: '#ff7f0e',  // Orange for Pool
                       width: 2
@@ -517,7 +517,7 @@ router.get("/dashboard", async (req, res) => {
                     x: data.requestHistory.map(entry => new Date(entry.hourMs)),
                     y: data.requestHistory.map(entry => entry.nFallbackRequestsError),
                     type: 'scatter',
-                    mode: 'lines+markers',
+                    mode: 'lines',
                     line: {
                       color: '#2ca02c',  // Green for Fallback
                       width: 2
