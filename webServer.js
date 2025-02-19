@@ -52,11 +52,13 @@ const fallbackUrlRouter = require('./routes/fallbackurl');
 const logsRouter = require('./routes/logs');
 const dashboardRouter = require('./routes/dashboard');
 const activeNodesRouter = require('./routes/activenodes');
+const nodeContinentsRouter = require('./routes/nodecontinents');
 
 app.use(fallbackUrlRouter);
 app.use(logsRouter);
 app.use(dashboardRouter);
 app.use(activeNodesRouter);
+app.use(nodeContinentsRouter);
 
 // Add root redirect to dashboard
 app.get('/', (req, res) => {
