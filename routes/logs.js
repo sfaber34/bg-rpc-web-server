@@ -53,6 +53,22 @@ async function fetchPoolNodeLogs() {
   }
 }
 
+async function fetchPoolCompareResults() {
+  try {
+    const response = await axios.get('http://localhost:3001/poolCompareResults', {
+      httpsAgent,
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+    const logs = Array.isArray(response.data) ? response.data : [];
+    return logs.reverse(); // Reverse the order so newest entries are first
+  } catch (error) {
+    console.error('Error fetching pool compare results:', error);
+    return [];
+  }
+}
+
 function renderPagination(currentPage, totalPages, baseUrl, tableId) {
   const pages = [];
   const maxVisiblePages = 5;
@@ -96,6 +112,13 @@ function getRowClass(log) {
     console.error('Error parsing status:', e);
   }
   
+  return ' class="error"';
+}
+
+function getCompareRowClass(log) {
+  if (log.resultsMatch) {
+    return '';
+  }
   return ' class="error"';
 }
 
@@ -194,33 +217,105 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
   `;
 }
 
+function renderCompareTable(logs, title, currentPage, tableId, isAjax = false) {
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const totalPages = Math.ceil(logs.length / ITEMS_PER_PAGE);
+  const pageData = logs.slice(startIndex, endIndex);
+
+  if (isAjax) {
+    return {
+      tbody: pageData.map(log => `
+        <tr${getCompareRowClass(log)}>
+          <td>${log.timestamp}</td>
+          <td>${log.resultsMatch ? 'Yes' : 'No'}</td>
+          <td>${log.mismatchedNode || '-'}</td>
+          <td>${log.mismatchedOwner || '-'}</td>
+          <td>${log.nodeId1}<br>${log.nodeResult1}</td>
+          <td>${log.nodeId2}<br>${log.nodeResult2}</td>
+          <td>${log.nodeId3}<br>${log.nodeResult3}</td>
+          <td>${log.mismatchedResults.length ? log.mismatchedResults.join('<br>') : '-'}</td>
+        </tr>
+      `).join(''),
+      pagination: logs.length > ITEMS_PER_PAGE ? renderPagination(currentPage, totalPages, '', tableId) : ''
+    };
+  }
+
+  return `
+    <div id="${tableId}" style="margin-bottom: 40px;">
+      <h2>${title} (${logs.length} total entries)</h2>
+      <div class="filter-buttons" style="margin-bottom: 15px;">
+        <button onclick="filterLogs('${tableId}', 'all')" class="filter-btn active">All</button>
+        <button onclick="filterLogs('${tableId}', 'success')" class="filter-btn">Match</button>
+        <button onclick="filterLogs('${tableId}', 'error')" class="filter-btn">Mismatch</button>
+      </div>
+      <table border="1" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+        <thead>
+          <tr style="background-color: #f2f2f2;">
+            <th>Timestamp</th>
+            <th>Results Match</th>
+            <th>Mismatched Node</th>
+            <th>Mismatched Owner</th>
+            <th>Node 1</th>
+            <th>Node 2</th>
+            <th>Node 3</th>
+            <th>Mismatched Results</th>
+          </tr>
+        </thead>
+        <tbody id="${tableId}-body">
+          ${pageData.map(log => `
+            <tr${getCompareRowClass(log)}>
+              <td>${log.timestamp}</td>
+              <td>${log.resultsMatch ? 'Yes' : 'No'}</td>
+              <td>${log.mismatchedNode || '-'}</td>
+              <td>${log.mismatchedOwner || '-'}</td>
+              <td>${log.nodeId1}<br>${log.nodeResult1}</td>
+              <td>${log.nodeId2}<br>${log.nodeResult2}</td>
+              <td>${log.nodeId3}<br>${log.nodeResult3}</td>
+              <td>${log.mismatchedResults.length ? log.mismatchedResults.join('<br>') : '-'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <div id="${tableId}-pagination">
+        ${logs.length > ITEMS_PER_PAGE ? renderPagination(currentPage, totalPages, '', tableId) : ''}
+      </div>
+    </div>
+  `;
+}
+
 router.get("/logs", async (req, res) => {
   try {
     const currentPage = parseInt(req.query.page) || 1;
     const filter = req.query.filter || 'all';
-    let [poolLogs, fallbackLogs, cacheLogs, poolNodeLogs] = await Promise.all([
+    let [poolLogs, fallbackLogs, cacheLogs, poolNodeLogs, poolCompareResults] = await Promise.all([
       fetchLogs('/poolRequests'),
       fetchLogs('/fallbackRequests'),
       fetchLogs('/cacheRequests'),
-      fetchPoolNodeLogs()
+      fetchPoolNodeLogs(),
+      fetchPoolCompareResults()
     ]);
 
     // Apply filters if needed
     if (filter !== 'all') {
       const filterFn = filter === 'success' 
-        ? log => log.status.toLowerCase() === 'success'
-        : log => log.status.toLowerCase() !== 'success';
+        ? log => log.status?.toLowerCase() === 'success' || log.resultsMatch
+        : log => log.status?.toLowerCase() !== 'success' || !log.resultsMatch;
       
       poolLogs = poolLogs.filter(filterFn);
       fallbackLogs = fallbackLogs.filter(filterFn);
       cacheLogs = cacheLogs.filter(filterFn);
       poolNodeLogs = poolNodeLogs.filter(filterFn);
+      poolCompareResults = poolCompareResults.filter(log => 
+        filter === 'success' ? log.resultsMatch : !log.resultsMatch
+      );
     }
 
     // If it's an AJAX request for a specific table, return only the updated parts
     if (req.query.tableId) {
       let logs;
       let title;
+      let isCompareTable = false;
       
       switch(req.query.tableId) {
         case 'poolLogs':
@@ -239,9 +334,16 @@ router.get("/logs", async (req, res) => {
           logs = poolNodeLogs;
           title = 'Pool Node Logs';
           break;
+        case 'poolCompareResults':
+          logs = poolCompareResults;
+          title = 'Pool Compare Results';
+          isCompareTable = true;
+          break;
       }
       
-      const rendered = renderTable(logs, title, currentPage, req.query.tableId, true);
+      const rendered = isCompareTable 
+        ? renderCompareTable(logs, title, currentPage, req.query.tableId, true)
+        : renderTable(logs, title, currentPage, req.query.tableId, true);
       res.setHeader('Content-Type', 'application/json');
       return res.json(rendered);
     }
@@ -253,7 +355,7 @@ router.get("/logs", async (req, res) => {
           <style>
             body { font-family: Arial, sans-serif; }
             table { font-size: 14px; width: 100%; }
-            th, td { padding: 8px; text-align: left; }
+            th, td { padding: 8px; text-align: left; vertical-align: top; }
             h1 { margin-bottom: 30px; }
             h2 { color: #333; margin-bottom: 15px; }
             tr:nth-child(even) { background-color: #f9f9f9; }
@@ -310,9 +412,13 @@ router.get("/logs", async (req, res) => {
             let poolCurrentPage = 1;
             let fallbackCurrentPage = 1;
             let cacheCurrentPage = 1;
+            let poolNodeCurrentPage = 1;
+            let poolCompareCurrentPage = 1;
             let poolCurrentFilter = 'all';
             let fallbackCurrentFilter = 'all';
             let cacheCurrentFilter = 'all';
+            let poolNodeCurrentFilter = 'all';
+            let poolCompareCurrentFilter = 'all';
 
             async function changePage(tableId, page) {
               try {
@@ -320,13 +426,19 @@ router.get("/logs", async (req, res) => {
                   poolCurrentPage = page;
                 } else if (tableId === 'fallbackLogs') {
                   fallbackCurrentPage = page;
-                } else {
+                } else if (tableId === 'cacheLogs') {
                   cacheCurrentPage = page;
+                } else if (tableId === 'poolNodeLogs') {
+                  poolNodeCurrentPage = page;
+                } else if (tableId === 'poolCompareResults') {
+                  poolCompareCurrentPage = page;
                 }
 
                 const filter = tableId === 'poolLogs' ? poolCurrentFilter : 
                              tableId === 'fallbackLogs' ? fallbackCurrentFilter : 
-                             cacheCurrentFilter;
+                             tableId === 'cacheLogs' ? cacheCurrentFilter :
+                             tableId === 'poolNodeLogs' ? poolNodeCurrentFilter :
+                             poolCompareCurrentFilter;
                 const response = await fetch(\`/logs?page=\${page}&tableId=\${tableId}&filter=\${filter}\`, {
                   headers: {
                     'Accept': 'application/json'
@@ -351,16 +463,22 @@ router.get("/logs", async (req, res) => {
                 } else if (tableId === 'fallbackLogs') {
                   fallbackCurrentFilter = filter;
                   fallbackCurrentPage = 1;
-                } else {
+                } else if (tableId === 'cacheLogs') {
                   cacheCurrentFilter = filter;
                   cacheCurrentPage = 1;
+                } else if (tableId === 'poolNodeLogs') {
+                  poolNodeCurrentFilter = filter;
+                  poolNodeCurrentPage = 1;
+                } else if (tableId === 'poolCompareResults') {
+                  poolCompareCurrentFilter = filter;
+                  poolCompareCurrentPage = 1;
                 }
 
                 // Update active button state
                 const buttons = document.querySelectorAll(\`#\${tableId} .filter-btn\`);
                 buttons.forEach(btn => btn.classList.remove('active'));
                 const activeButton = Array.from(buttons).find(btn => 
-                  btn.textContent.toLowerCase() === filter.toLowerCase()
+                  btn.textContent.toLowerCase() === (filter === 'success' && tableId === 'poolCompareResults' ? 'match' : filter).toLowerCase()
                 );
                 if (activeButton) activeButton.classList.add('active');
 
@@ -388,6 +506,8 @@ router.get("/logs", async (req, res) => {
           ${renderTable(cacheLogs, 'Cache Request Logs', currentPage, 'cacheLogs')}
           <h1>Pool Node Logs</h1>
           ${renderTable(poolNodeLogs, 'Pool Node Logs', currentPage, 'poolNodeLogs')}
+          <h1>Pool Compare Results</h1>
+          ${renderCompareTable(poolCompareResults, 'Pool Compare Results', currentPage, 'poolCompareResults')}
         </body>
       </html>
     `);
