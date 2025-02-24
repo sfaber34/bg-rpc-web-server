@@ -78,6 +78,27 @@ function renderPagination(currentPage, totalPages, baseUrl, tableId) {
   `;
 }
 
+function getRowClass(log) {
+  if (log.status.toLowerCase() === 'success') {
+    return '';
+  }
+  
+  try {
+    // Parse the status field which contains the JSON response
+    const statusObj = typeof log.status === 'string' ? JSON.parse(log.status) : log.status;
+    
+    // Check if it contains an error code starting with -69
+    if (statusObj?.error?.code && statusObj.error.code.toString().startsWith('-69')) {
+      return ' class="warning"';
+    }
+  } catch (e) {
+    // If parsing fails, treat as regular error
+    console.error('Error parsing status:', e);
+  }
+  
+  return ' class="error"';
+}
+
 function renderTable(logs, title, currentPage, tableId, isAjax = false) {
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
@@ -90,7 +111,7 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
     // For AJAX requests, only return the table body and pagination
     return {
       tbody: pageData.map(log => isPoolNodeLogs ? `
-        <tr${log.status.toLowerCase() !== 'success' ? ' class="error"' : ''}>
+        <tr${getRowClass(log)}>
           <td>${log.timestamp}</td>
           <td>${log.nodeId}</td>
           <td>${log.owner}</td>
@@ -100,7 +121,7 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
           <td>${log.status}</td>
         </tr>
       ` : `
-        <tr${log.status.toLowerCase() !== 'success' ? ' class="error"' : ''}>
+        <tr${getRowClass(log)}>
           <td>${log.timestamp}</td>
           <td>${log.origin}</td>
           <td>${log.method}</td>
@@ -145,7 +166,7 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
         </thead>
         <tbody id="${tableId}-body">
           ${pageData.map(log => isPoolNodeLogs ? `
-            <tr${log.status.toLowerCase() !== 'success' ? ' class="error"' : ''}>
+            <tr${getRowClass(log)}>
               <td>${log.timestamp}</td>
               <td>${log.nodeId}</td>
               <td>${log.owner}</td>
@@ -155,7 +176,7 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
               <td>${log.status}</td>
             </tr>
           ` : `
-            <tr${log.status.toLowerCase() !== 'success' ? ' class="error"' : ''}>
+            <tr${getRowClass(log)}>
               <td>${log.timestamp}</td>
               <td>${log.origin}</td>
               <td>${log.method}</td>
@@ -237,8 +258,10 @@ router.get("/logs", async (req, res) => {
             h2 { color: #333; margin-bottom: 15px; }
             tr:nth-child(even) { background-color: #f9f9f9; }
             tr:hover { background-color: #f5f5f5; }
-            tr.error { background-color: #ffebee; }
-            tr.error:hover { background-color: #ffe5e8; }
+            tr.error { background-color: #ffe5e8; }
+            tr.error:hover { background-color:rgb(251, 210, 215); }
+            tr.warning { background-color:rgb(254, 236, 214); }
+            tr.warning:hover { background-color:rgb(252, 231, 204); }
             .pagination { 
               display: flex;
               justify-content: center;
