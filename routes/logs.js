@@ -223,18 +223,42 @@ function renderCompareTable(logs, title, currentPage, tableId, isAjax = false) {
   const totalPages = Math.ceil(logs.length / ITEMS_PER_PAGE);
   const pageData = logs.slice(startIndex, endIndex);
 
+  const formatResult = (result, index) => {
+    // Handle string that might contain JSON
+    if (typeof result === 'string' && result.startsWith('result:')) {
+      try {
+        const jsonStr = result.replace('result:', '').trim();
+        const parsed = JSON.parse(jsonStr);
+        if (typeof parsed === 'object' && parsed !== null && Object.keys(parsed).length > 0) {
+          const resultStr = JSON.stringify(parsed);
+          return `<a class="view-object-link" onclick='showModal(${resultStr.replace(/'/g, "\\'")})'>[View Object]</a>`;
+        }
+        return jsonStr;
+      } catch (e) {
+        return result;
+      }
+    }
+    
+    // Handle direct objects
+    if (typeof result === 'object' && result !== null && Object.keys(result).length > 0) {
+      const resultStr = JSON.stringify(result);
+      return `<a class="view-object-link" onclick='showModal(${resultStr.replace(/'/g, "\\'")})'>[View Object]</a>`;
+    }
+    return result;
+  };
+
   if (isAjax) {
     return {
-      tbody: pageData.map(log => `
+      tbody: pageData.map((log, index) => `
         <tr${getCompareRowClass(log)}>
           <td>${log.timestamp}</td>
           <td>${log.resultsMatch ? 'Yes' : 'No'}</td>
           <td>${log.mismatchedNode || '-'}</td>
           <td>${log.mismatchedOwner || '-'}</td>
-          <td>${log.nodeId1}<br>${log.nodeResult1}</td>
-          <td>${log.nodeId2}<br>${log.nodeResult2}</td>
-          <td>${log.nodeId3}<br>${log.nodeResult3}</td>
-          <td>${log.mismatchedResults.length ? log.mismatchedResults.join('<br>') : '-'}</td>
+          <td>${log.nodeId1}<br>${formatResult(log.nodeResult1, index)}</td>
+          <td>${log.nodeId2}<br>${formatResult(log.nodeResult2, index)}</td>
+          <td>${log.nodeId3}<br>${formatResult(log.nodeResult3, index)}</td>
+          <td>${log.mismatchedResults.length ? log.mismatchedResults.map(r => formatResult(r, index)).join('<br>') : '-'}</td>
         </tr>
       `).join(''),
       pagination: logs.length > ITEMS_PER_PAGE ? renderPagination(currentPage, totalPages, '', tableId) : ''
@@ -263,16 +287,16 @@ function renderCompareTable(logs, title, currentPage, tableId, isAjax = false) {
           </tr>
         </thead>
         <tbody id="${tableId}-body">
-          ${pageData.map(log => `
+          ${pageData.map((log, index) => `
             <tr${getCompareRowClass(log)}>
               <td>${log.timestamp}</td>
               <td>${log.resultsMatch ? 'Yes' : 'No'}</td>
               <td>${log.mismatchedNode || '-'}</td>
               <td>${log.mismatchedOwner || '-'}</td>
-              <td>${log.nodeId1}<br>${log.nodeResult1}</td>
-              <td>${log.nodeId2}<br>${log.nodeResult2}</td>
-              <td>${log.nodeId3}<br>${log.nodeResult3}</td>
-              <td>${log.mismatchedResults.length ? log.mismatchedResults.join('<br>') : '-'}</td>
+              <td>${log.nodeId1}<br>${formatResult(log.nodeResult1, index)}</td>
+              <td>${log.nodeId2}<br>${formatResult(log.nodeResult2, index)}</td>
+              <td>${log.nodeId3}<br>${formatResult(log.nodeResult3, index)}</td>
+              <td>${log.mismatchedResults.length ? log.mismatchedResults.map(r => formatResult(r, index)).join('<br>') : '-'}</td>
             </tr>
           `).join('')}
         </tbody>
@@ -355,7 +379,7 @@ router.get("/logs", async (req, res) => {
           <style>
             body { font-family: Arial, sans-serif; }
             table { font-size: 14px; width: 100%; }
-            th, td { padding: 8px; text-align: left; vertical-align: top; }
+            th, td { padding: 8px; text-align: left; vertical-align: top; font-family: monospace; white-space: pre-wrap; }
             h1 { margin-bottom: 30px; }
             h2 { color: #333; margin-bottom: 15px; }
             tr:nth-child(even) { background-color: #f9f9f9; }
@@ -407,6 +431,49 @@ router.get("/logs", async (req, res) => {
               color: white;
               border-color: #007bff;
             }
+            /* Modal styles */
+            .modal {
+              display: none;
+              position: fixed;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              background-color: rgba(0,0,0,0.5);
+              z-index: 1000;
+            }
+            .modal-content {
+              position: relative;
+              background-color: #fefefe;
+              margin: 5% auto;
+              padding: 20px;
+              border: 1px solid #888;
+              width: 80%;
+              max-width: 800px;
+              max-height: 80vh;
+              overflow-y: auto;
+              border-radius: 5px;
+            }
+            .close-modal {
+              position: absolute;
+              right: 10px;
+              top: 5px;
+              color: #aaa;
+              font-size: 28px;
+              font-weight: bold;
+              cursor: pointer;
+            }
+            .close-modal:hover {
+              color: #000;
+            }
+            .view-object-link {
+              color: #007bff;
+              text-decoration: underline;
+              cursor: pointer;
+            }
+            .view-object-link:hover {
+              color: #0056b3;
+            }
           </style>
           <script>
             let poolCurrentPage = 1;
@@ -419,6 +486,26 @@ router.get("/logs", async (req, res) => {
             let cacheCurrentFilter = 'all';
             let poolNodeCurrentFilter = 'all';
             let poolCompareCurrentFilter = 'all';
+
+            function showModal(content) {
+              const modal = document.getElementById('objectModal');
+              const modalContent = document.getElementById('modalContent');
+              modalContent.innerHTML = '<pre>' + JSON.stringify(content, null, 2) + '</pre>';
+              modal.style.display = 'block';
+            }
+
+            function closeModal() {
+              const modal = document.getElementById('objectModal');
+              modal.style.display = 'none';
+            }
+
+            // Close modal when clicking outside
+            window.onclick = function(event) {
+              const modal = document.getElementById('objectModal');
+              if (event.target === modal) {
+                modal.style.display = 'none';
+              }
+            }
 
             async function changePage(tableId, page) {
               try {
@@ -500,6 +587,14 @@ router.get("/logs", async (req, res) => {
           </script>
         </head>
         <body>
+          <!-- Modal -->
+          <div id="objectModal" class="modal">
+            <div class="modal-content">
+              <span class="close-modal" onclick="closeModal()">&times;</span>
+              <div id="modalContent"></div>
+            </div>
+          </div>
+          
           <h1>Proxy Logs</h1>
           ${renderTable(poolLogs, 'Pool Request Logs', currentPage, 'poolLogs')}
           ${renderTable(fallbackLogs, 'Fallback Request Logs', currentPage, 'fallbackLogs')}
