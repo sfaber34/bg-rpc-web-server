@@ -601,7 +601,6 @@ router.get("/logs", async (req, res) => {
           ${renderTable(cacheLogs, 'Cache Request Logs', currentPage, 'cacheLogs')}
           <h1>Pool Node Logs</h1>
           ${renderTable(poolNodeLogs, 'Pool Node Logs', currentPage, 'poolNodeLogs')}
-          <h1>Pool Compare Results</h1>
           ${renderCompareTable(poolCompareResults, 'Pool Compare Results', currentPage, 'poolCompareResults')}
         </body>
       </html>
