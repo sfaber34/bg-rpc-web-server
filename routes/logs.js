@@ -388,7 +388,8 @@ router.get("/logs", async (req, res) => {
         <head>
           <title>RPC Logs</title>
           <style>
-            body { font-family: Arial, sans-serif; }
+            body { font-family: Arial, sans-serif; margin: 0px; }
+            .container { margin: 0px 10px; }
             table { font-size: 14px; width: 100%; }
             th, td { padding: 8px; text-align: left; vertical-align: top; font-family: monospace; white-space: pre-wrap; }
             h1 { margin-bottom: 30px; }
@@ -601,22 +602,24 @@ router.get("/logs", async (req, res) => {
           </script>
         </head>
         <body>
-          <!-- Modal -->
-          <div id="objectModal" class="modal">
-            <div class="modal-content">
-              <span class="close-modal" onclick="closeModal()">&times;</span>
-              <div id="modalContent"></div>
+          <div class="container">
+            <!-- Modal -->
+            <div id="objectModal" class="modal">
+              <div class="modal-content">
+                <span class="close-modal" onclick="closeModal()">&times;</span>
+                <div id="modalContent"></div>
+              </div>
             </div>
+            
+            <h1>Proxy Logs</h1>
+            ${renderTable(poolLogs, 'Pool Request Logs', currentPage, 'poolLogs')}
+            ${renderTable(fallbackLogs, 'Fallback Request Logs', currentPage, 'fallbackLogs')}
+            ${renderTable(cacheLogs, 'Cache Request Logs', currentPage, 'cacheLogs')}
+            <h1>Pool Node Logs</h1>
+            ${renderTable(poolNodeLogs, 'Pool Node Logs', currentPage, 'poolNodeLogs')}
+            ${renderCompareTable(poolCompareResults, 'Pool Compare Results', currentPage, 'poolCompareResults')}
           </div>
-          
-          <h1>Proxy Logs</h1>
-          ${renderTable(poolLogs, 'Pool Request Logs', currentPage, 'poolLogs')}
-          ${renderTable(fallbackLogs, 'Fallback Request Logs', currentPage, 'fallbackLogs')}
-          ${renderTable(cacheLogs, 'Cache Request Logs', currentPage, 'cacheLogs')}
-          <h1>Pool Node Logs</h1>
-          ${renderTable(poolNodeLogs, 'Pool Node Logs', currentPage, 'poolNodeLogs')}
-          ${renderCompareTable(poolCompareResults, 'Pool Compare Results', currentPage, 'poolCompareResults')}
-        </body>
+          </body>
       </html>
     `);
   } catch (error) {
