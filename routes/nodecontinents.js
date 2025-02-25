@@ -3,9 +3,11 @@ const axios = require('axios');
 const https = require('https');
 const router = express.Router();
 
+const { poolPort } = require('../config');
+
 router.get("/nodecontinents", async (req, res) => {
   try {
-    const response = await axios.get('https://localhost:3003/nodeContinents', {
+    const response = await axios.get(`http://localhost:${poolPort}/nodeContinents`, {
       httpsAgent: new https.Agent({  
         rejectUnauthorized: false
       })

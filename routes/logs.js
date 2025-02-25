@@ -3,6 +3,8 @@ const router = express.Router();
 const axios = require('axios');
 const https = require('https');
 
+const { logsPort } = require('../config');
+
 const ITEMS_PER_PAGE = 30;
 
 // Create an HTTPS agent that accepts self-signed certificates
@@ -13,7 +15,7 @@ const httpsAgent = new https.Agent({
 async function fetchLogs(url) {
   try {
     // USE HTTP FOR NOW
-    const response = await axios.get(`http://localhost:3001${url}`, {
+    const response = await axios.get(`http://localhost:${logsPort}${url}`, {
       httpsAgent,
       headers: {
         'Accept': 'application/json'
@@ -39,7 +41,7 @@ async function fetchLogs(url) {
 
 async function fetchPoolNodeLogs() {
   try {
-    const response = await axios.get('http://localhost:3001/poolNodes', {
+    const response = await axios.get(`http://localhost:${logsPort}/poolNodes`, {
       httpsAgent,
       headers: {
         'Accept': 'application/json'
@@ -55,7 +57,7 @@ async function fetchPoolNodeLogs() {
 
 async function fetchPoolCompareResults() {
   try {
-    const response = await axios.get('http://localhost:3001/poolCompareResults', {
+    const response = await axios.get(`http://localhost:${logsPort}/poolCompareResults`, {
       httpsAgent,
       headers: {
         'Accept': 'application/json'
