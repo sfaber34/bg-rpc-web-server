@@ -39,7 +39,7 @@ function fetchPoolNodes() {
 // Function to generate HTML table from pool nodes data
 function generateTable(poolNodes) {
   let tableHtml = `
-    <table border="1" style="border-collapse: collapse; width: 100%; margin-top: 20px;">
+    <table border="1" style="border-collapse: collapse; width: 100%; margin: 20px auto; max-width: 3000px;">
       <thead>
         <tr style="background-color: #f2f2f2;">
           <th style="padding: 12px;">Node ID</th>
@@ -140,7 +140,8 @@ router.get("/activenodes", async (req, res) => {
               max-width: 100%;
               margin: 0 auto;
               background-color: white;
-              padding: 20px;
+              padding: 0px;
+              margin: 0px 10px;
             }
             .error { 
               color: red; 
