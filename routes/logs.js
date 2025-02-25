@@ -266,9 +266,9 @@ function renderCompareTable(logs, title, currentPage, tableId, isAjax = false) {
           <td>${log.resultsMatch ? 'Yes' : 'No'}</td>
           <td>${log.mismatchedNode || '-'}</td>
           <td>${log.mismatchedOwner || '-'}</td>
-          <td>${log.nodeId1}<br>${formatResult(log.nodeResult1, index)}</td>
-          <td>${log.nodeId2}<br>${formatResult(log.nodeResult2, index)}</td>
-          <td>${log.nodeId3}<br>${formatResult(log.nodeResult3, index)}</td>
+          <td><span class="node-id">${log.nodeId1}</span><br>${formatResult(log.nodeResult1, index)}</td>
+          <td><span class="node-id">${log.nodeId2}</span><br>${formatResult(log.nodeResult2, index)}</td>
+          <td><span class="node-id">${log.nodeId3}</span><br>${formatResult(log.nodeResult3, index)}</td>
           <td>${log.mismatchedResults.length ? log.mismatchedResults.map(r => formatResult(r, index)).join('<br>') : '-'}</td>
         </tr>
       `).join(''),
@@ -304,9 +304,9 @@ function renderCompareTable(logs, title, currentPage, tableId, isAjax = false) {
               <td>${log.resultsMatch ? 'Yes' : 'No'}</td>
               <td>${log.mismatchedNode || '-'}</td>
               <td>${log.mismatchedOwner || '-'}</td>
-              <td>${log.nodeId1}<br>${formatResult(log.nodeResult1, index)}</td>
-              <td>${log.nodeId2}<br>${formatResult(log.nodeResult2, index)}</td>
-              <td>${log.nodeId3}<br>${formatResult(log.nodeResult3, index)}</td>
+              <td><span class="node-id">${log.nodeId1}</span><br>${formatResult(log.nodeResult1, index)}</td>
+              <td><span class="node-id">${log.nodeId2}</span><br>${formatResult(log.nodeResult2, index)}</td>
+              <td><span class="node-id">${log.nodeId3}</span><br>${formatResult(log.nodeResult3, index)}</td>
               <td>${log.mismatchedResults.length ? log.mismatchedResults.map(r => formatResult(r, index)).join('<br>') : '-'}</td>
             </tr>
           `).join('')}
@@ -484,6 +484,9 @@ router.get("/logs", async (req, res) => {
             }
             .view-object-link:hover {
               color: #0056b3;
+            }
+            .node-id {
+              font-weight: bold;
             }
           </style>
           <script>
