@@ -39,7 +39,7 @@ function fetchPoolNodes() {
 // Function to generate HTML table from pool nodes data
 function generateTable(poolNodes) {
   let tableHtml = `
-    <table border="1" style="border-collapse: collapse; width: 100%; margin: 20px auto; max-width: 3000px;">
+    <table border="1" style="border-collapse: collapse; width: 100%; margin: 20px 0px;">
       <thead>
         <tr style="background-color: #f2f2f2;">
           <th style="padding: 12px;">Node ID</th>
