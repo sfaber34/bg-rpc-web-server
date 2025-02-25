@@ -32,6 +32,7 @@ app.use((req, res, next) => {
           <a href="/dashboard" style="margin-right: 15px; color: #333; text-decoration: none;">Dashboard</a>
           <a href="/logs" style="margin-right: 15px; color: #333; text-decoration: none;">Logs</a>
           <a href="/activenodes" style="margin-right: 15px; color: #333; text-decoration: none;">Active Nodes</a>
+          <a href="/points" style="margin-right: 15px; color: #333; text-decoration: none;">Points</a>
           <a href="/fallbackurl" style="color: #333; text-decoration: none;">Fallback URL</a>
         </div>
       `;
@@ -53,13 +54,14 @@ const logsRouter = require('./routes/logs');
 const dashboardRouter = require('./routes/dashboard');
 const activeNodesRouter = require('./routes/activenodes');
 const nodeContinentsRouter = require('./routes/nodecontinents');
+const pointsRouter = require('./routes/points');
 
 app.use(fallbackUrlRouter);
 app.use(logsRouter);
 app.use(dashboardRouter);
 app.use(activeNodesRouter);
 app.use(nodeContinentsRouter);
-
+app.use(pointsRouter);
 // Add root redirect to dashboard
 app.get('/', (req, res) => {
   res.redirect('/dashboard');
