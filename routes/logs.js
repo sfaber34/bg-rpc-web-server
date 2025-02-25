@@ -235,9 +235,13 @@ function renderCompareTable(logs, title, currentPage, tableId, isAjax = false) {
           const resultStr = JSON.stringify(parsed);
           return `<a class="view-object-link" onclick='showModal(${resultStr.replace(/'/g, "\\'")})'>[View Object]</a>`;
         }
-        return jsonStr;
+        return jsonStr.length > 48 ? 
+          `<a class="view-object-link" onclick='showModal("${jsonStr.replace(/"/g, '\\"')}")'>[View Value]</a>` : 
+          jsonStr;
       } catch (e) {
-        return result;
+        return result.length > 48 ? 
+          `<a class="view-object-link" onclick='showModal("${result.replace(/"/g, '\\"')}")'>[View Value]</a>` : 
+          result;
       }
     }
     
@@ -245,6 +249,11 @@ function renderCompareTable(logs, title, currentPage, tableId, isAjax = false) {
     if (typeof result === 'object' && result !== null && Object.keys(result).length > 0) {
       const resultStr = JSON.stringify(result);
       return `<a class="view-object-link" onclick='showModal(${resultStr.replace(/'/g, "\\'")})'>[View Object]</a>`;
+    }
+    
+    // Handle long string values
+    if (typeof result === 'string' && result.length > 48) {
+      return `<a class="view-object-link" onclick='showModal("${result.replace(/"/g, '\\"')}")'>[View Value]</a>`;
     }
     return result;
   };
