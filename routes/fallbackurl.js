@@ -4,9 +4,13 @@ const { fallbackUrl } = require('../config');
 
 router.get("/fallbackurl", (req, res) => {
   res.send(
-    "<html><body><div style='padding:20px;font-size:18px'><H1>PROXY TO:</H1></div><pre>" +
+    "<style>" +
+      "body { font-family: Arial, sans-serif; margin: 0px; }" +
+      ".container { margin: 0px 10px; }" +
+    "</style>" +
+    "<html><body><div class='container'><div style='padding:20px;font-size:18px'><H1>PROXY TO:</H1></div><pre>" +
       fallbackUrl +
-      "</pre></body></html>"
+      "</pre></div></body></html>"
   );
 });
 
