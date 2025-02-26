@@ -61,6 +61,15 @@ router.get("/dashboard", async (req, res) => {
           </div>
 
           <div class="dashboard-section">
+            <h2>Warning Metrics</h2>
+            <div class="dashboard">
+              <div id="warningGauge1" class="gauge"></div>
+              <div id="warningGauge2" class="gauge"></div>
+              <div id="warningGauge3" class="gauge"></div>
+            </div>
+          </div>
+
+          <div class="dashboard-section">
             <h2>Error Metrics</h2>
             <div class="dashboard">
               <div id="errorGauge1" class="gauge"></div>
@@ -208,6 +217,45 @@ router.get("/dashboard", async (req, res) => {
               };
               
               Plotly.newPlot("timeGauge" + (index + 1), gaugeData, layout);
+            });
+
+            // Create warning gauge charts
+            const warningMetrics = [
+              'nWarningCacheRequestsLastHour',
+              'nWarningPoolRequestsLastHour',
+              'nWarningFallbackRequestsLastHour'
+            ];
+
+            warningMetrics.forEach((key, index) => {
+              const value = data[key] || 0;
+              const gaugeData = [{
+                type: "indicator",
+                mode: "gauge+number",
+                value: value,
+                title: { 
+                  text: formatMetricName(key),
+                  font: { size: 22 }
+                },
+                gauge: {
+                  axis: { range: [0, 50] },  // Adjusted range for warning metrics
+                  bar: { 
+                    color: key.toLowerCase().includes('cache') ? "#9370db" :     // Purple for Cache
+                           key.toLowerCase().includes('pool') ? "#ff7f0e" :      // Orange for Pool
+                           "#2ca02c"                                            // Green for Fallback
+                  },
+                  bgcolor: "white",
+                  borderwidth: 2,
+                  bordercolor: "#ccc",
+                }
+              }];
+              
+              const layout = {
+                margin: { t: 50, b: 25, l: 25, r: 25 },
+                paper_bgcolor: "white",
+                font: { size: 12 }
+              };
+              
+              Plotly.newPlot("warningGauge" + (index + 1), gaugeData, layout);
             });
 
             // Create error gauge charts
