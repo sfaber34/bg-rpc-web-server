@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const https = require('https');
+const http = require('http');
 
 const { poolPort } = require('../config');
 // Function to fetch pool nodes data
@@ -10,11 +10,10 @@ function fetchPoolNodes() {
       hostname: 'localhost',
       port: poolPort,
       path: '/poolNodes',
-      method: 'GET',
-      rejectUnauthorized: false // Only for local development
+      method: 'GET'
     };
 
-    const req = https.request(options, (res) => {
+    const req = http.request(options, (res) => {
       let data = '';
       res.on('data', (chunk) => {
         data += chunk;
