@@ -28,7 +28,7 @@ app.use((req, res, next) => {
     if (typeof body === 'string' && body.includes('<html')) {
       // Create navigation bar HTML
       const navBar = `
-        <div style="background-color: #f8f9fa; padding: 10px; margin-bottom: 20px;">
+        <div style="background-color: #f8f9fa; padding: 10px; margin-bottom: 20px; font-size: 12pt;">
           <a href="/dashboard" style="margin-right: 15px; color: #333; text-decoration: none;">Dashboard</a>
           <a href="/logs" style="margin-right: 15px; color: #333; text-decoration: none;">Logs</a>
           <a href="/activenodes" style="margin-right: 15px; color: #333; text-decoration: none;">Active Nodes</a>
