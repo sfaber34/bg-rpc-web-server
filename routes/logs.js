@@ -333,16 +333,18 @@ router.get("/logs", async (req, res) => {
 
     // Apply filters if needed
     if (filter !== 'all') {
-      const filterFn = filter === 'success' 
-        ? log => log.status?.toLowerCase() === 'success' || log.resultsMatch
-        : log => log.status?.toLowerCase() !== 'success' || !log.resultsMatch;
+      const isSuccess = filter === 'success';
+      const filterFn = log => {
+        const status = log.status?.toLowerCase?.() || '';
+        return isSuccess ? status === 'success' : status !== 'success';
+      };
       
       poolLogs = poolLogs.filter(filterFn);
       fallbackLogs = fallbackLogs.filter(filterFn);
       cacheLogs = cacheLogs.filter(filterFn);
       poolNodeLogs = poolNodeLogs.filter(filterFn);
       poolCompareResults = poolCompareResults.filter(log => 
-        filter === 'success' ? log.resultsMatch : !log.resultsMatch
+        isSuccess ? log.resultsMatch : !log.resultsMatch
       );
     }
 
