@@ -1,12 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
+const https = require('https');
 
 const { logsPort } = require('../config');
 
+// Create an HTTPS agent that accepts self-signed certificates
+const httpsAgent = new https.Agent({
+  rejectUnauthorized: false
+});
+
 router.get("/dashboard", async (req, res) => {
   try {
-    const response = await axios.get(`http://localhost:${logsPort}/dashboard`);
+    const response = await axios.get(`https://localhost:${logsPort}/dashboard`, {
+      httpsAgent
+    });
     const data = response.data;
 
     // Escape the data for safe injection into script tag

@@ -14,8 +14,7 @@ const httpsAgent = new https.Agent({
 
 async function fetchLogs(url) {
   try {
-    // USE HTTP FOR NOW
-    const response = await axios.get(`http://localhost:${logsPort}${url}`, {
+    const response = await axios.get(`https://localhost:${logsPort}${url}`, {
       httpsAgent,
       headers: {
         'Accept': 'application/json'
@@ -41,7 +40,7 @@ async function fetchLogs(url) {
 
 async function fetchPoolNodeLogs() {
   try {
-    const response = await axios.get(`http://localhost:${logsPort}/poolNodes`, {
+    const response = await axios.get(`https://localhost:${logsPort}/poolNodes`, {
       httpsAgent,
       headers: {
         'Accept': 'application/json'
@@ -57,7 +56,7 @@ async function fetchPoolNodeLogs() {
 
 async function fetchPoolCompareResults() {
   try {
-    const response = await axios.get(`http://localhost:${logsPort}/poolCompareResults`, {
+    const response = await axios.get(`https://localhost:${logsPort}/poolCompareResults`, {
       httpsAgent,
       headers: {
         'Accept': 'application/json'
