@@ -7,7 +7,7 @@ const { poolPort } = require('../config');
 
 router.get("/nodecontinents", async (req, res) => {
   try {
-    const response = await axios.get(`http://localhost:${poolPort}/nodeContinents`, {
+    const response = await axios.get(`https://stage.rpc.buidlguidl.com:${poolPort}/nodeContinents`, {
       httpsAgent: new https.Agent({  
         rejectUnauthorized: true
       })
