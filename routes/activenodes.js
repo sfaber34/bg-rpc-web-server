@@ -2,12 +2,14 @@ const express = require('express');
 const router = express.Router();
 const https = require('https');
 
+require('dotenv').config();
+
 const { poolPort } = require('../config');
 // Function to fetch pool nodes data
 function fetchPoolNodes() {
   return new Promise((resolve, reject) => {
     const options = {
-      hostname: 'stage.rpc.buidlguidl.com',
+      hostname: process.env.HOST,
       port: poolPort,
       path: '/poolNodes',
       method: 'GET',

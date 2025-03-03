@@ -4,6 +4,8 @@ const axios = require('axios');
 const https = require('https');
 const fs = require('fs');
 
+require('dotenv').config();
+
 const { logsPort } = require('../config');
 
 // Create an HTTPS agent that accepts self-signed certificates
@@ -15,7 +17,7 @@ const httpsAgent = new https.Agent({
 
 router.get("/dashboard", async (req, res) => {
   try {
-    const response = await axios.get(`https://stage.rpc.buidlguidl.com:${logsPort}/dashboard`, {
+    const response = await axios.get(`https://${process.env.HOST}:${logsPort}/dashboard`, {
       httpsAgent
     });
     const data = response.data;

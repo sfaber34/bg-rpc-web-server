@@ -4,9 +4,9 @@ const axios = require('axios');
 const https = require('https');
 const fs = require('fs');
 
+require('dotenv').config();
+
 const { logsPort, logItemsPerPage } = require('../config');
-
-
 
 // Create an HTTPS agent that uses proper SSL validation
 const httpsAgent = new https.Agent({
@@ -17,7 +17,7 @@ const httpsAgent = new https.Agent({
 
 async function fetchLogs(url) {
   try {
-    const response = await axios.get(`https://stage.rpc.buidlguidl.com:${logsPort}${url}`, {
+    const response = await axios.get(`https://${process.env.HOST}:${logsPort}${url}`, {
       httpsAgent,
       headers: {
         'Accept': 'application/json'
@@ -43,7 +43,7 @@ async function fetchLogs(url) {
 
 async function fetchPoolNodeLogs() {
   try {
-    const response = await axios.get(`https://stage.rpc.buidlguidl.com:${logsPort}/poolNodes`, {
+    const response = await axios.get(`https://${process.env.HOST}:${logsPort}/poolNodes`, {
       httpsAgent,
       headers: {
         'Accept': 'application/json'
@@ -59,7 +59,7 @@ async function fetchPoolNodeLogs() {
 
 async function fetchPoolCompareResults() {
   try {
-    const response = await axios.get(`https://stage.rpc.buidlguidl.com:${logsPort}/poolCompareResults`, {
+    const response = await axios.get(`https://${process.env.HOST}:${logsPort}/poolCompareResults`, {
       httpsAgent,
       headers: {
         'Accept': 'application/json'
