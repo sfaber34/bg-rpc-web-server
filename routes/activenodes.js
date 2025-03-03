@@ -1,19 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const http = require('http');
+const https = require('https');
 
 const { poolPort } = require('../config');
 // Function to fetch pool nodes data
 function fetchPoolNodes() {
   return new Promise((resolve, reject) => {
     const options = {
-      hostname: 'localhost',
+      hostname: 'stage.rpc.buidlguidl.com',
       port: poolPort,
       path: '/poolNodes',
-      method: 'GET'
+      method: 'GET',
+      rejectUnauthorized: true // Enforce SSL certificate validation
     };
 
-    const req = http.request(options, (res) => {
+    const req = https.request(options, (res) => {
       let data = '';
       res.on('data', (chunk) => {
         data += chunk;
