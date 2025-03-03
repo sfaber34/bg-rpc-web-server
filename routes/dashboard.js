@@ -2,17 +2,20 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const https = require('https');
+const fs = require('fs');
 
 const { logsPort } = require('../config');
 
 // Create an HTTPS agent that accepts self-signed certificates
 const httpsAgent = new https.Agent({
-  rejectUnauthorized: false
+  rejectUnauthorized: true,
+  cert: fs.readFileSync('/home/ubuntu/shared/server.cert'),
+  key: fs.readFileSync('/home/ubuntu/shared/server.key')
 });
 
 router.get("/dashboard", async (req, res) => {
   try {
-    const response = await axios.get(`https://localhost:${logsPort}/dashboard`, {
+    const response = await axios.get(`https://stage.rpc.buidlguidl.com:${logsPort}/dashboard`, {
       httpsAgent
     });
     const data = response.data;
