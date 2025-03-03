@@ -2,19 +2,22 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const https = require('https');
+const fs = require('fs');
 
 const { logsPort, logItemsPerPage } = require('../config');
 
 
 
-// Create an HTTPS agent that accepts self-signed certificates
+// Create an HTTPS agent that uses proper SSL validation
 const httpsAgent = new https.Agent({
-  rejectUnauthorized: false
+  rejectUnauthorized: true,
+  cert: fs.readFileSync('/home/ubuntu/shared/server.cert'),
+  key: fs.readFileSync('/home/ubuntu/shared/server.key')
 });
 
 async function fetchLogs(url) {
   try {
-    const response = await axios.get(`https://localhost:${logsPort}${url}`, {
+    const response = await axios.get(`https://stage.rpc.buidlguidl.com:${logsPort}${url}`, {
       httpsAgent,
       headers: {
         'Accept': 'application/json'
@@ -40,7 +43,7 @@ async function fetchLogs(url) {
 
 async function fetchPoolNodeLogs() {
   try {
-    const response = await axios.get(`https://localhost:${logsPort}/poolNodes`, {
+    const response = await axios.get(`https://stage.rpc.buidlguidl.com:${logsPort}/poolNodes`, {
       httpsAgent,
       headers: {
         'Accept': 'application/json'
@@ -56,7 +59,7 @@ async function fetchPoolNodeLogs() {
 
 async function fetchPoolCompareResults() {
   try {
-    const response = await axios.get(`https://localhost:${logsPort}/poolCompareResults`, {
+    const response = await axios.get(`https://stage.rpc.buidlguidl.com:${logsPort}/poolCompareResults`, {
       httpsAgent,
       headers: {
         'Accept': 'application/json'
@@ -99,18 +102,25 @@ function getRowClass(log) {
   if (log.status.toLowerCase() === 'success') {
     return '';
   }
+
+  // Handle timeout errors specifically
+  if (typeof log.status === 'string' && log.status.toLowerCase().includes('timeout')) {
+    return ' class="warning"';
+  }
   
   try {
-    // Parse the status field which contains the JSON response
-    const statusObj = typeof log.status === 'string' ? JSON.parse(log.status) : log.status;
-    
-    // Check if it contains an error code starting with -69
-    if (statusObj?.error?.code && statusObj.error.code.toString().startsWith('-69')) {
-      return ' class="warning"';
+    // Only attempt to parse if it looks like JSON
+    if (typeof log.status === 'string' && (log.status.startsWith('{') || log.status.startsWith('['))) {
+      const statusObj = JSON.parse(log.status);
+      
+      // Check if it contains an error code starting with -69
+      if (statusObj?.error?.code && statusObj.error.code.toString().startsWith('-69')) {
+        return ' class="warning"';
+      }
     }
   } catch (e) {
-    // If parsing fails, treat as regular error
-    console.error('Error parsing status:', e);
+    // If parsing fails, just continue to return error class
+    console.debug('Non-JSON status value:', log.status);
   }
   
   return ' class="error"';
