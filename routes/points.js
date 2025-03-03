@@ -3,6 +3,7 @@ const router = express.Router();
 const { Pool } = require('pg');
 const { SecretsManagerClient, GetSecretValueCommand } = require("@aws-sdk/client-secrets-manager");
 const path = require('path');
+const fs = require('fs');
 
 // Load .env from the project root directory
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
@@ -36,7 +37,8 @@ async function getDbConnection() {
       database: secret.dbname || 'postgres',
       port: 5432,
       ssl: {
-        rejectUnauthorized: false
+        rejectUnauthorized: true,
+        ca: fs.readFileSync('/home/ubuntu/shared/rds-ca-bundle.pem')
       }
     };
 

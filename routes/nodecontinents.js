@@ -9,7 +9,7 @@ router.get("/nodecontinents", async (req, res) => {
   try {
     const response = await axios.get(`http://localhost:${poolPort}/nodeContinents`, {
       httpsAgent: new https.Agent({  
-        rejectUnauthorized: false
+        rejectUnauthorized: true
       })
     });
     res.json(response.data);
