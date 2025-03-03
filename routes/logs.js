@@ -3,9 +3,9 @@ const router = express.Router();
 const axios = require('axios');
 const https = require('https');
 
-const { logsPort } = require('../config');
+const { logsPort, logItemsPerPage } = require('../config');
 
-const ITEMS_PER_PAGE = 30;
+
 
 // Create an HTTPS agent that accepts self-signed certificates
 const httpsAgent = new https.Agent({
@@ -125,9 +125,9 @@ function getCompareRowClass(log) {
 }
 
 function renderTable(logs, title, currentPage, tableId, isAjax = false) {
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const totalPages = Math.ceil(logs.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * logItemsPerPage;
+  const endIndex = startIndex + logItemsPerPage;
+  const totalPages = Math.ceil(logs.length / logItemsPerPage);
   const pageData = logs.slice(startIndex, endIndex);
 
   const isPoolNodeLogs = tableId === 'poolNodeLogs';
@@ -155,7 +155,7 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
           <td>${log.status}</td>
         </tr>
       `).join(''),
-      pagination: logs.length > ITEMS_PER_PAGE ? renderPagination(currentPage, totalPages, '', tableId) : ''
+      pagination: logs.length > logItemsPerPage ? renderPagination(currentPage, totalPages, '', tableId) : ''
     };
   }
 
@@ -213,16 +213,16 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
         </tbody>
       </table>
       <div id="${tableId}-pagination">
-        ${logs.length > ITEMS_PER_PAGE ? renderPagination(currentPage, totalPages, '', tableId) : ''}
+        ${logs.length > logItemsPerPage ? renderPagination(currentPage, totalPages, '', tableId) : ''}
       </div>
     </div>
   `;
 }
 
 function renderCompareTable(logs, title, currentPage, tableId, isAjax = false) {
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const totalPages = Math.ceil(logs.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * logItemsPerPage;
+  const endIndex = startIndex + logItemsPerPage;
+  const totalPages = Math.ceil(logs.length / logItemsPerPage);
   const pageData = logs.slice(startIndex, endIndex);
 
   const formatResult = (result, index) => {
@@ -272,7 +272,7 @@ function renderCompareTable(logs, title, currentPage, tableId, isAjax = false) {
           <td>${log.mismatchedResults.length ? log.mismatchedResults.map(r => formatResult(r, index)).join('<br>') : '-'}</td>
         </tr>
       `).join(''),
-      pagination: logs.length > ITEMS_PER_PAGE ? renderPagination(currentPage, totalPages, '', tableId) : ''
+      pagination: logs.length > logItemsPerPage ? renderPagination(currentPage, totalPages, '', tableId) : ''
     };
   }
 
@@ -313,7 +313,7 @@ function renderCompareTable(logs, title, currentPage, tableId, isAjax = false) {
         </tbody>
       </table>
       <div id="${tableId}-pagination">
-        ${logs.length > ITEMS_PER_PAGE ? renderPagination(currentPage, totalPages, '', tableId) : ''}
+        ${logs.length > logItemsPerPage ? renderPagination(currentPage, totalPages, '', tableId) : ''}
       </div>
     </div>
   `;
