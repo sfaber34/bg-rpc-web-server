@@ -135,7 +135,7 @@ router.get("/dashboard", async (req, res) => {
                   font: { size: 22 }
                 },
                 gauge: {
-                  axis: { range: [0, 1000] },
+                  axis: { range: [0, 5000] },
                   bar: { color: "#1f77b4" },    // Blue for Total
                   bgcolor: "white",
                   borderwidth: 2,
@@ -172,7 +172,7 @@ router.get("/dashboard", async (req, res) => {
                     font: { size: 22 }
                   },
                   gauge: {
-                    axis: { range: [0, 1000] },
+                    axis: { range: [0, 5000] },
                     bar: { 
                       color: key.toLowerCase().includes('cache') ? "#9370db" :     // Purple for Cache
                             key.toLowerCase().includes('pool') ? "#ff7f0e" :      // Orange for Pool
@@ -251,7 +251,7 @@ router.get("/dashboard", async (req, res) => {
                   font: { size: 22 }
                 },
                 gauge: {
-                  axis: { range: [0, 50] },  // Adjusted range for warning metrics
+                  axis: { range: [0, 300] },  // Adjusted range for warning metrics
                   bar: { 
                     color: key.toLowerCase().includes('cache') ? "#9370db" :     // Purple for Cache
                            key.toLowerCase().includes('pool') ? "#ff7f0e" :      // Orange for Pool
@@ -290,7 +290,7 @@ router.get("/dashboard", async (req, res) => {
                   font: { size: 22 }
                 },
                 gauge: {
-                  axis: { range: [0, 50] },  // Adjusted range for error metrics
+                  axis: { range: [0, 300] },  // Adjusted range for error metrics
                   bar: { 
                     color: key.toLowerCase().includes('cache') ? "#9370db" :     // Purple for Cache
                            key.toLowerCase().includes('pool') ? "#ff7f0e" :      // Orange for Pool
