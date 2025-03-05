@@ -43,6 +43,24 @@ router.get("/dashboard", async (req, res) => {
             .gauge { flex: 1; min-width: 300px; height: 300px; }
             .hist-plot { width: 100%; height: 800px; margin-bottom: 20px; }
             h1 { padding: 0px 20px; }
+            .time-filter-btn {
+              padding: 8px 16px;
+              margin: 0 5px;
+              border: 1px solid #ccc;
+              background-color: white;
+              border-radius: 4px;
+              cursor: pointer;
+              font-size: 14px;
+              transition: all 0.2s;
+            }
+            .time-filter-btn:hover {
+              background-color: #f0f0f0;
+            }
+            .time-filter-btn.active {
+              background-color: #1f77b4;
+              color: white;
+              border-color: #1f77b4;
+            }
           </style>
         </head>
         <body>
@@ -93,6 +111,13 @@ router.get("/dashboard", async (req, res) => {
 
           <div class="dashboard-section">
             <h2>Hourly Request History</h2>
+            <div style="margin-bottom: 20px; text-align: left;">
+              <button class="time-filter-btn" data-range="1">1 Day</button>
+              <button class="time-filter-btn" data-range="7">1 Week</button>
+              <button class="time-filter-btn" data-range="14">2 Weeks</button>
+              <button class="time-filter-btn" data-range="30">1 Month</button>
+              <button class="time-filter-btn" data-range="all">All</button>
+            </div>
             <div id="requestHistoryPlot" class="hist-plot"></div>
             <div id="warningHistoryPlot" class="hist-plot"></div>
             <div id="errorHistoryPlot" class="hist-plot"></div>
@@ -535,6 +560,69 @@ router.get("/dashboard", async (req, res) => {
 
             // Create request history line plot
             if (data.requestHistory) {
+              // Function to update time range for all plots
+              function updateTimeRange(days) {
+                const now = new Date();
+                let startDate = days === 'all' ? null : new Date(now - (days * 24 * 60 * 60 * 1000));
+                
+                // Update button styles
+                document.querySelectorAll('.time-filter-btn').forEach(btn => {
+                  btn.classList.remove('active');
+                  if ((btn.dataset.range === days.toString()) || (days === 'all' && btn.dataset.range === 'all')) {
+                    btn.classList.add('active');
+                  }
+                });
+
+                const newRange = days === 'all' ? 
+                  [data.requestHistory[0].hourMs, now] : 
+                  [startDate, now];
+
+                ['requestHistoryPlot', 'warningHistoryPlot', 'errorHistoryPlot'].forEach(plotId => {
+                  const plot = document.getElementById(plotId);
+                  
+                  // Get the visible traces data within the new time range
+                  const startTime = new Date(newRange[0]).getTime();
+                  const endTime = new Date(newRange[1]).getTime();
+                  
+                  // Calculate y-axis range based on visible data
+                  let yMin = Infinity;
+                  let yMax = -Infinity;
+                  
+                  plot.data.forEach(trace => {
+                    trace.x.forEach((x, i) => {
+                      const xTime = new Date(x).getTime();
+                      if (xTime >= startTime && xTime <= endTime) {
+                        const y = trace.y[i];
+                        if (y !== null && y !== undefined) {
+                          yMin = Math.min(yMin, y);
+                          yMax = Math.max(yMax, y);
+                        }
+                      }
+                    });
+                  });
+                  
+                  // Add 10% padding to y-axis range for better visualization
+                  const yRange = yMax - yMin;
+                  const yPadding = yRange * 0.1;
+                  yMin = Math.max(0, yMin - yPadding); // Ensure we don't go below 0
+                  yMax = yMax + yPadding;
+
+                  Plotly.relayout(plotId, {
+                    'xaxis.range': newRange,
+                    'yaxis.range': [yMin, yMax],
+                    'yaxis.autorange': false
+                  });
+                });
+              }
+
+              // Add click handlers to time filter buttons
+              document.querySelectorAll('.time-filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                  const range = btn.dataset.range;
+                  updateTimeRange(range === 'all' ? 'all' : parseInt(range));
+                });
+              });
+
               const traces = [
                 {
                   name: 'Cache Requests',
@@ -611,6 +699,11 @@ router.get("/dashboard", async (req, res) => {
                 }
               };
 
+              // Set initial time range to all data
+              const now = new Date();
+              const initialStartDate = new Date(data.requestHistory[0].hourMs);
+              successLayout.xaxis.range = [initialStartDate, now];
+
               Plotly.newPlot('requestHistoryPlot', traces, successLayout).then(gd => {
                 // Create warning request history line plot with matching x-axis range
                 const warningTraces = [
@@ -666,7 +759,7 @@ router.get("/dashboard", async (req, res) => {
                   },
                   xaxis: {
                     ...sharedLayoutConfig.xaxis,
-                    range: gd.layout.xaxis.range  // Use the range from the success plot
+                    range: [initialStartDate, now]  // Use the same initial range
                   },
                   yaxis: {
                     title: 'Number of Warnings',
@@ -729,7 +822,7 @@ router.get("/dashboard", async (req, res) => {
                     },
                     xaxis: {
                       ...sharedLayoutConfig.xaxis,
-                      range: gd.layout.xaxis.range  // Use the range from the success plot
+                      range: [initialStartDate, now]  // Use the same initial range
                     },
                     yaxis: {
                       title: 'Number of Errors',
@@ -738,6 +831,13 @@ router.get("/dashboard", async (req, res) => {
                   };
 
                   Plotly.newPlot('errorHistoryPlot', errorTraces, errorLayout);
+                  
+                  // Set initial active button to "All Data"
+                  document.querySelector('.time-filter-btn[data-range="1"]').classList.remove('active');
+                  document.querySelector('.time-filter-btn[data-range="all"]').classList.add('active');
+
+                  // Calculate and set initial y-axis ranges based on all data
+                  updateTimeRange('all');
                 });
               });
             }
