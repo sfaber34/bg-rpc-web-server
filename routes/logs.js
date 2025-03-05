@@ -471,8 +471,7 @@ router.get("/logs", async (req, res) => {
               margin: 5% auto;
               padding: 20px;
               border: 1px solid #888;
-              width: 80%;
-              max-width: 800px;
+              max-width: 80%;
               max-height: 80vh;
               overflow-y: auto;
               border-radius: 5px;
