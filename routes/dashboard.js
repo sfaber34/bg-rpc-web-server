@@ -102,6 +102,7 @@ router.get("/dashboard", async (req, res) => {
             <h2>Request Duration Distribution</h2>
             <div id="methodDurationHist" class="hist-plot"></div>
             <div id="originDurationHist" class="hist-plot"></div>
+            <div id="nodeDurationHist" class="hist-plot"></div>
           </div>
           
           <script>
@@ -465,6 +466,71 @@ router.get("/dashboard", async (req, res) => {
               };
 
               Plotly.newPlot('originDurationHist', originTraces, originLayout);
+            }
+
+            // Add Node Duration Distribution histogram
+            if (data.nodeDurationHist) {
+              const nodeTraces = Object.entries(data.nodeDurationHist).map(([node, distribution], index) => {
+                const color = colors[index % colors.length];
+                const solidColor = solidColors[index % solidColors.length];
+                return {
+                  type: 'box',
+                  x: Array(5).fill(node),
+                  y: Object.values(distribution),
+                  name: node,
+                  boxpoints: false,
+                  fillcolor: color,
+                  line: {
+                    width: 2,
+                    color: solidColor
+                  },
+                  median: {
+                    color: 'rgb(0,0,0)',
+                    width: 8
+                  }
+                };
+              });
+
+              const nodeLayout = {
+                title: {
+                  text: 'Node Duration Distribution (ms)',
+                  font: { size: 22 }
+                },
+                xaxis: {
+                  title: '',
+                  tickangle: -45,
+                  showticklabels: false,
+                  tickfont: {
+                    size: 12
+                  }
+                },
+                yaxis: {
+                  title: 'Duration (ms)',
+                  type: 'linear'
+                },
+                annotations: Object.keys(data.nodeDurationHist).map((node, index) => ({
+                  x: node,
+                  y: -0.1,
+                  text: node,
+                  textangle: -45,
+                  showarrow: false,
+                  xanchor: 'right',
+                  yanchor: 'middle',
+                  font: {
+                    size: 12,
+                    color: solidColors[index % solidColors.length]
+                  },
+                  xref: 'x',
+                  yref: 'paper'
+                })),
+                margin: { t: 50, b: 120, l: 50, r: 25 },
+                paper_bgcolor: "white",
+                plot_bgcolor: "white",
+                font: { size: 12 },
+                showlegend: false
+              };
+
+              Plotly.newPlot('nodeDurationHist', nodeTraces, nodeLayout);
             }
 
             // Create request history line plot
