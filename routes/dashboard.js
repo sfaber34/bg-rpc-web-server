@@ -834,14 +834,38 @@ router.get("/dashboard", async (req, res) => {
                     }
                   };
 
-                  Plotly.newPlot('errorHistoryPlot', errorTraces, errorLayout);
-                  
-                  // Set initial active button to "All Data"
-                  document.querySelector('.time-filter-btn[data-range="1"]').classList.remove('active');
-                  document.querySelector('.time-filter-btn[data-range="all"]').classList.add('active');
+                  Plotly.newPlot('errorHistoryPlot', errorTraces, errorLayout).then(() => {
+                    // Set initial active button to "All Data"
+                    document.querySelector('.time-filter-btn[data-range="1"]').classList.remove('active');
+                    document.querySelector('.time-filter-btn[data-range="all"]').classList.add('active');
 
-                  // Calculate and set initial y-axis ranges based on all data
-                  updateTimeRange('all');
+                    // Calculate and set initial y-axis ranges based on all data
+                    updateTimeRange('all');
+
+                    // Function to sync plots
+                    function syncPlots(sourceId, eventData) {
+                      if (eventData['xaxis.range[0]'] !== undefined && eventData['xaxis.range[1]'] !== undefined) {
+                        const newRange = [eventData['xaxis.range[0]'], eventData['xaxis.range[1]']];
+                        const plots = ['requestHistoryPlot', 'warningHistoryPlot', 'errorHistoryPlot'];
+                        
+                        plots.forEach(plotId => {
+                          if (plotId !== sourceId) {
+                            Plotly.relayout(plotId, {
+                              'xaxis.range': newRange
+                            });
+                          }
+                        });
+                      }
+                    }
+
+                    // Add event listeners
+                    document.getElementById('requestHistoryPlot').on('plotly_relayout', 
+                      eventData => syncPlots('requestHistoryPlot', eventData));
+                    document.getElementById('warningHistoryPlot').on('plotly_relayout', 
+                      eventData => syncPlots('warningHistoryPlot', eventData));
+                    document.getElementById('errorHistoryPlot').on('plotly_relayout', 
+                      eventData => syncPlots('errorHistoryPlot', eventData));
+                  });
                 });
               });
             }
