@@ -279,6 +279,8 @@ function renderCompareTable(logs, title, currentPage, tableId, isAjax = false) {
           <td><span class="node-id">${log.nodeId2}</span><br>${formatResult(log.nodeResult2, index)}</td>
           <td><span class="node-id">${log.nodeId3}</span><br>${formatResult(log.nodeResult3, index)}</td>
           <td>${log.mismatchedResults.length ? log.mismatchedResults.map(r => formatResult(r, index)).join('<br>') : '-'}</td>
+          <td>${log.method || '-'}</td>
+          <td>${log.params || '-'}</td>
         </tr>
       `).join(''),
       pagination: logs.length > logItemsPerPage ? renderPagination(currentPage, totalPages, '', tableId) : ''
@@ -304,6 +306,8 @@ function renderCompareTable(logs, title, currentPage, tableId, isAjax = false) {
             <th>Node 2</th>
             <th>Node 3</th>
             <th>Mismatched Results</th>
+            <th>Method</th>
+            <th>Params</th>
           </tr>
         </thead>
         <tbody id="${tableId}-body">
@@ -317,6 +321,8 @@ function renderCompareTable(logs, title, currentPage, tableId, isAjax = false) {
               <td><span class="node-id">${log.nodeId2}</span><br>${formatResult(log.nodeResult2, index)}</td>
               <td><span class="node-id">${log.nodeId3}</span><br>${formatResult(log.nodeResult3, index)}</td>
               <td>${log.mismatchedResults.length ? log.mismatchedResults.map(r => formatResult(r, index)).join('<br>') : '-'}</td>
+              <td>${log.method || '-'}</td>
+              <td>${log.params || '-'}</td>
             </tr>
           `).join('')}
         </tbody>
