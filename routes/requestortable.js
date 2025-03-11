@@ -13,14 +13,14 @@ router.get("/requestortable", async (req, res) => {
       tableRows += `
         <tr>
           <td>${domain}</td>
-          <td>${stats.nAllRequestsAllTime}</td>
-          <td>${stats.nCacheRequestsAllTime}</td>
-          <td>${stats.nPoolRequestsAllTime}</td>
-          <td>${stats.nFallbackRequestsAllTime}</td>
-          <td>${stats.nAllRequestsLastWeek}</td>
-          <td>${stats.nCacheRequestsLastWeek}</td>
-          <td>${stats.nPoolRequestsLastWeek}</td>
-          <td>${stats.nFallbackRequestsLastWeek}</td>
+          <td data-value="${stats.nAllRequestsAllTime}">${stats.nAllRequestsAllTime}</td>
+          <td data-value="${stats.nCacheRequestsAllTime}">${stats.nCacheRequestsAllTime}</td>
+          <td data-value="${stats.nPoolRequestsAllTime}">${stats.nPoolRequestsAllTime}</td>
+          <td data-value="${stats.nFallbackRequestsAllTime}">${stats.nFallbackRequestsAllTime}</td>
+          <td data-value="${stats.nAllRequestsLastWeek}">${stats.nAllRequestsLastWeek}</td>
+          <td data-value="${stats.nCacheRequestsLastWeek}">${stats.nCacheRequestsLastWeek}</td>
+          <td data-value="${stats.nPoolRequestsLastWeek}">${stats.nPoolRequestsLastWeek}</td>
+          <td data-value="${stats.nFallbackRequestsLastWeek}">${stats.nFallbackRequestsLastWeek}</td>
         </tr>
       `;
     }
@@ -50,6 +50,24 @@ router.get("/requestortable", async (req, res) => {
             th {
               background-color: #f2f2f2;
               font-weight: bold;
+              cursor: pointer;
+              position: relative;
+            }
+            th:hover {
+              background-color: #e5e5e5;
+            }
+            th::after {
+              content: '';
+              position: absolute;
+              right: 8px;
+              top: 50%;
+              transform: translateY(-50%);
+            }
+            th.sort-desc::after {
+              content: '▼';
+            }
+            th.sort-asc::after {
+              content: '▲';
             }
             tr:nth-child(even) { 
               background-color: #f9f9f9;
@@ -66,24 +84,70 @@ router.get("/requestortable", async (req, res) => {
         </head>
         <body>
           <h1>RPC Request Statistics</h1>
-          <table>
+          <table id="statsTable">
             <thead>
               <tr>
-                <th>Domain</th>
-                <th>All Requests (All Time)</th>
-                <th>Cache Requests (All Time)</th>
-                <th>Pool Requests (All Time)</th>
-                <th>Fallback Requests (All Time)</th>
-                <th>All Requests (Last Week)</th>
-                <th>Cache Requests (Last Week)</th>
-                <th>Pool Requests (Last Week)</th>
-                <th>Fallback Requests (Last Week)</th>
+                <th data-sort="string">Domain</th>
+                <th data-sort="number" class="sort-desc">All Requests (All Time)</th>
+                <th data-sort="number">Cache Requests (All Time)</th>
+                <th data-sort="number">Pool Requests (All Time)</th>
+                <th data-sort="number">Fallback Requests (All Time)</th>
+                <th data-sort="number">All Requests (Last Week)</th>
+                <th data-sort="number">Cache Requests (Last Week)</th>
+                <th data-sort="number">Pool Requests (Last Week)</th>
+                <th data-sort="number">Fallback Requests (Last Week)</th>
               </tr>
             </thead>
             <tbody>
               ${tableRows}
             </tbody>
           </table>
+
+          <script>
+            document.addEventListener('DOMContentLoaded', function() {
+              const table = document.getElementById('statsTable');
+              const headers = table.querySelectorAll('th');
+              const tbody = table.querySelector('tbody');
+
+              // Sort by All Requests (All Time) by default
+              sortTable(1, 'desc');
+
+              headers.forEach((header, index) => {
+                header.addEventListener('click', () => {
+                  const currentDirection = header.classList.contains('sort-desc') ? 'asc' : 'desc';
+                  headers.forEach(h => {
+                    h.classList.remove('sort-desc', 'sort-asc');
+                  });
+                  header.classList.add(\`sort-\${currentDirection}\`);
+                  sortTable(index, currentDirection);
+                });
+              });
+
+              function sortTable(columnIndex, direction) {
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                const sortType = headers[columnIndex].getAttribute('data-sort');
+
+                rows.sort((a, b) => {
+                  let aValue = a.cells[columnIndex].getAttribute('data-value') || a.cells[columnIndex].textContent.trim();
+                  let bValue = b.cells[columnIndex].getAttribute('data-value') || b.cells[columnIndex].textContent.trim();
+
+                  if (sortType === 'number') {
+                    aValue = parseFloat(aValue) || 0;
+                    bValue = parseFloat(bValue) || 0;
+                  }
+
+                  if (direction === 'asc') {
+                    return aValue > bValue ? 1 : -1;
+                  } else {
+                    return aValue < bValue ? 1 : -1;
+                  }
+                });
+
+                tbody.innerHTML = '';
+                rows.forEach(row => tbody.appendChild(row));
+              }
+            });
+          </script>
         </body>
       </html>
     `);
