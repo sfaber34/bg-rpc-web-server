@@ -32,6 +32,7 @@ app.use((req, res, next) => {
           <a href="/dashboard" style="margin-right: 15px; color: #333; text-decoration: none;">Dashboard</a>
           <a href="/logs" style="margin-right: 15px; color: #333; text-decoration: none;">Logs</a>
           <a href="/activenodes" style="margin-right: 15px; color: #333; text-decoration: none;">Active Nodes</a>
+          <a href="/requestortable" style="margin-right: 15px; color: #333; text-decoration: none;">Requestor Table</a>
           <a href="/points" style="margin-right: 15px; color: #333; text-decoration: none;">Points</a>
           <a href="/fallbackurl" style="color: #333; text-decoration: none;">Fallback URL</a>
         </div>
@@ -49,19 +50,22 @@ app.use((req, res, next) => {
 });
 
 // Then mount routes
-const fallbackUrlRouter = require('./routes/fallbackurl');
-const logsRouter = require('./routes/logs');
 const dashboardRouter = require('./routes/dashboard');
+const logsRouter = require('./routes/logs');
 const activeNodesRouter = require('./routes/activenodes');
-const nodeContinentsRouter = require('./routes/nodecontinents');
+const requestorTableRouter = require('./routes/requestortable');
 const pointsRouter = require('./routes/points');
+const fallbackUrlRouter = require('./routes/fallbackurl');
+const nodeContinentsRouter = require('./routes/nodecontinents');
 
-app.use(fallbackUrlRouter);
-app.use(logsRouter);
 app.use(dashboardRouter);
+app.use(logsRouter);
 app.use(activeNodesRouter);
-app.use(nodeContinentsRouter);
+app.use(requestorTableRouter);
 app.use(pointsRouter);
+app.use(fallbackUrlRouter);
+app.use(nodeContinentsRouter);
+
 // Add root redirect to dashboard
 app.get('/', (req, res) => {
   res.redirect('/dashboard');
