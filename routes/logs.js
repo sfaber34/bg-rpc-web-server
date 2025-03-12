@@ -175,6 +175,7 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
       <div class="filter-buttons" style="margin-bottom: 15px;">
         <button onclick="filterLogs('${tableId}', 'all')" class="filter-btn active">All</button>
         <button onclick="filterLogs('${tableId}', 'success')" class="filter-btn">Success</button>
+        <button onclick="filterLogs('${tableId}', 'warning')" class="filter-btn">Warning</button>
         <button onclick="filterLogs('${tableId}', 'error')" class="filter-btn">Error</button>
       </div>
       <table border="1" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
@@ -349,9 +350,35 @@ router.get("/logs", async (req, res) => {
     // Apply filters if needed
     if (filter !== 'all') {
       const isSuccess = filter === 'success';
+      const isWarning = filter === 'warning';
       const filterFn = log => {
         const status = log.status?.toLowerCase?.() || '';
-        return isSuccess ? status === 'success' : status !== 'success';
+        if (isSuccess) return status === 'success';
+        if (isWarning) {
+          // Check for timeout or -69 error code
+          if (status.includes('timeout')) return true;
+          try {
+            if (typeof status === 'string') {
+              const statusObj = JSON.parse(status);
+              if (statusObj?.error?.code && statusObj.error.code.toString().startsWith('-69')) {
+                return true;
+              }
+            }
+          } catch (e) {}
+          return false;
+        }
+        // Error case - not success and not warning
+        if (status === 'success') return false;
+        if (status.includes('timeout')) return false;
+        try {
+          if (typeof status === 'string') {
+            const statusObj = JSON.parse(status);
+            if (statusObj?.error?.code && statusObj.error.code.toString().startsWith('-69')) {
+              return false;
+            }
+          }
+        } catch (e) {}
+        return true;
       };
       
       poolLogs = poolLogs.filter(filterFn);
@@ -459,6 +486,13 @@ router.get("/logs", async (req, res) => {
               background-color: #007bff;
               color: white;
               border-color: #007bff;
+            }
+            #poolLogs,
+            #fallbackLogs,
+            #cacheLogs,
+            #poolNodeLogs,
+            #poolCompareResults {
+              min-height: 1187px;
             }
             /* Modal styles */
             .modal {
