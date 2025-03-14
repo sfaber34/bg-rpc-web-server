@@ -705,8 +705,11 @@ router.get("/dashboard", async (req, res) => {
                 font: { size: 12 },
                 showlegend: true,
                 legend: {
-                  orientation: 'h',
-                  y: -0.2
+                  orientation: 'v',
+                  x: 1.02,
+                  y: 1,
+                  xanchor: 'left',
+                  yanchor: 'top'
                 }
               };
 
