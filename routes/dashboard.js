@@ -61,6 +61,25 @@ router.get("/dashboard", async (req, res) => {
               color: white;
               border-color: #1f77b4;
             }
+            #time-series-section {
+              height: 100vh;
+              margin: 0;
+              padding: 20px;
+              display: flex;
+              flex-direction: column;
+              box-sizing: border-box;
+            }
+            #time-series-section h2 {
+              margin-top: 0;
+            }
+            #time-series-section .hist-plot {
+              flex: 1;
+              height: calc((100vh - 150px) / 3);
+              margin-bottom: 10px;
+            }
+            #time-series-section .time-filter-buttons {
+              margin-bottom: 15px;
+            }
           </style>
         </head>
         <body>
@@ -109,9 +128,9 @@ router.get("/dashboard", async (req, res) => {
             </div>
           </div>
 
-          <div class="dashboard-section">
+          <div class="dashboard-section" id="time-series-section">
             <h2>Hourly Request History</h2>
-            <div style="margin-bottom: 20px; text-align: left;">
+            <div class="time-filter-buttons" style="margin-bottom: 15px; text-align: left;">
               <button class="time-filter-btn" data-range="1">1 Day</button>
               <button class="time-filter-btn" data-range="7">1 Week</button>
               <button class="time-filter-btn" data-range="14">2 Weeks</button>
