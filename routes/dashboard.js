@@ -722,7 +722,16 @@ router.get("/dashboard", async (req, res) => {
                 yaxis: {
                   title: 'Number of Requests',
                   type: 'linear'
-                }
+                },
+                xaxis: {
+                  ...sharedLayoutConfig.xaxis,
+                  showticklabels: false,
+                  ticks: '',
+                  title: '',
+                  zeroline: false,
+                  showgrid: true
+                },
+                margin: { t: 50, b: 20, l: 50, r: 25 }
               };
 
               // Set initial time range to all data
@@ -785,12 +794,18 @@ router.get("/dashboard", async (req, res) => {
                   },
                   xaxis: {
                     ...sharedLayoutConfig.xaxis,
-                    range: [initialStartDate, now]  // Use the same initial range
+                    range: [initialStartDate, now],  // Use the same initial range
+                    showticklabels: false,
+                    ticks: '',
+                    title: '',
+                    zeroline: false,
+                    showgrid: true
                   },
                   yaxis: {
                     title: 'Number of Warnings',
                     type: 'linear'
-                  }
+                  },
+                  margin: { t: 50, b: 20, l: 50, r: 25 }
                 };
 
                 Plotly.newPlot('warningHistoryPlot', warningTraces, warningLayout).then(() => {
