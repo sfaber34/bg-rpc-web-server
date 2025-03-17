@@ -71,6 +71,7 @@ router.get("/dashboard", async (req, res) => {
             }
             #time-series-section h2 {
               margin-top: 0;
+              margin-bottom: 5px;
             }
             #time-series-section .hist-plot {
               flex: 1;
@@ -130,7 +131,7 @@ router.get("/dashboard", async (req, res) => {
 
           <div class="dashboard-section" id="time-series-section">
             <h2>Hourly Request History</h2>
-            <div class="time-filter-buttons" style="margin-bottom: 15px; text-align: left;">
+            <div class="time-filter-buttons" style="text-align: left;">
               <button class="time-filter-btn" data-range="1">1 Day</button>
               <button class="time-filter-btn" data-range="7">1 Week</button>
               <button class="time-filter-btn" data-range="14">2 Weeks</button>
@@ -731,7 +732,7 @@ router.get("/dashboard", async (req, res) => {
                   zeroline: false,
                   showgrid: true
                 },
-                margin: { t: 50, b: 20, l: 50, r: 25 }
+                margin: { t: 40, b: 20, l: 50, r: 25 }
               };
 
               // Set initial time range to all data
@@ -805,7 +806,7 @@ router.get("/dashboard", async (req, res) => {
                     title: 'Number of Warnings',
                     type: 'linear'
                   },
-                  margin: { t: 50, b: 20, l: 50, r: 25 }
+                  margin: { t: 40, b: 20, l: 50, r: 25 }
                 };
 
                 Plotly.newPlot('warningHistoryPlot', warningTraces, warningLayout).then(() => {
@@ -868,7 +869,8 @@ router.get("/dashboard", async (req, res) => {
                     yaxis: {
                       title: 'Number of Errors',
                       type: 'linear'
-                    }
+                    },
+                    margin: { t: 40, b: 120, l: 50, r: 25 }
                   };
 
                   Plotly.newPlot('errorHistoryPlot', errorTraces, errorLayout).then(() => {
