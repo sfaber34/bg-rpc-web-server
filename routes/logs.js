@@ -662,9 +662,9 @@ router.get("/logs", async (req, res) => {
             </div>
             
             <h1>Proxy Logs</h1>
+            ${renderTable(cacheLogs, 'Cache Request Logs', currentPage, 'cacheLogs')}
             ${renderTable(poolLogs, 'Pool Request Logs', currentPage, 'poolLogs')}
             ${renderTable(fallbackLogs, 'Fallback Request Logs', currentPage, 'fallbackLogs')}
-            ${renderTable(cacheLogs, 'Cache Request Logs', currentPage, 'cacheLogs')}
             <h1>Pool Node Logs</h1>
             ${renderTable(poolNodeLogs, 'Pool Node Logs', currentPage, 'poolNodeLogs')}
             ${renderCompareTable(poolCompareResults, 'Pool Compare Results', currentPage, 'poolCompareResults')}
