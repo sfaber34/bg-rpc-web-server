@@ -904,12 +904,12 @@ router.get("/dashboard", async (req, res) => {
                   };
 
                   Plotly.newPlot('errorHistoryPlot', errorTraces, errorLayout).then(() => {
-                    // Set initial active button to "1 Week" instead of "All Data"
+                    // Set initial active button to "1 Day" instead of "1 Week"
                     document.querySelector('.time-filter-btn[data-range="all"]').classList.remove('active');
-                    document.querySelector('.time-filter-btn[data-range="7"]').classList.add('active');
+                    document.querySelector('.time-filter-btn[data-range="1"]').classList.add('active');
 
-                    // Calculate and set initial y-axis ranges based on 1 week of data
-                    updateTimeRange(7);
+                    // Calculate and set initial y-axis ranges based on 1 day of data
+                    updateTimeRange(1);
 
                     // Function to sync plots
                     function syncPlots(sourceId, eventData) {
