@@ -76,11 +76,52 @@ router.get("/dashboard", async (req, res) => {
             #time-series-section .hist-plot {
               flex: 1;
               height: calc((100vh - 150px) / 3);
-              margin-bottom: 10px;
+              margin-bottom: 0px;
             }
             #time-series-section .time-filter-buttons {
               margin-bottom: 6px;
               width: 460px;
+            }
+            .filter-legend-container {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 6px;
+            }
+            .time-legend {
+              display: flex;
+              gap: 15px;
+            }
+            .time-legend span {
+              position: relative;
+              padding-left: 20px;
+            }
+            .time-legend span:before {
+              content: "";
+              position: absolute;
+              left: 0;
+              top: 50%;
+              transform: translateY(-50%);
+              width: 15px;
+              height: 2px;
+            }
+            .time-legend span:nth-child(1):before {
+              background-color: #9370db; /* Purple for Cache */
+            }
+            .time-legend span:nth-child(1) {
+              color: #9370db; /* Purple for Cache */
+            }
+            .time-legend span:nth-child(2):before {
+              background-color: #ff7f0e; /* Orange for Pool */
+            }
+            .time-legend span:nth-child(2) {
+              color: #ff7f0e; /* Orange for Pool */
+            }
+            .time-legend span:nth-child(3):before {
+              background-color: #2ca02c; /* Green for Fallback */
+            }
+            .time-legend span:nth-child(3) {
+              color: #2ca02c; /* Green for Fallback */
             }
           </style>
         </head>
@@ -132,12 +173,19 @@ router.get("/dashboard", async (req, res) => {
 
           <div class="dashboard-section" id="time-series-section">
             <h2>Hourly Request History</h2>
-            <div class="time-filter-buttons" style="text-align: left;">
-              <button class="time-filter-btn" data-range="1">1 Day</button>
-              <button class="time-filter-btn" data-range="7">1 Week</button>
-              <button class="time-filter-btn" data-range="14">2 Weeks</button>
-              <button class="time-filter-btn" data-range="30">1 Month</button>
-              <button class="time-filter-btn" data-range="all">All</button>
+            <div class="filter-legend-container">
+              <div class="time-filter-buttons">
+                <button class="time-filter-btn" data-range="1">1 Day</button>
+                <button class="time-filter-btn" data-range="7">1 Week</button>
+                <button class="time-filter-btn" data-range="14">2 Weeks</button>
+                <button class="time-filter-btn" data-range="30">1 Month</button>
+                <button class="time-filter-btn" data-range="all">All</button>
+              </div>
+              <div class="time-legend">
+                <span>Cache</span>
+                <span>Pool</span>
+                <span>Fallback</span>
+              </div>
             </div>
             <div id="requestHistoryPlot" class="hist-plot"></div>
             <div id="warningHistoryPlot" class="hist-plot"></div>
