@@ -79,7 +79,8 @@ router.get("/dashboard", async (req, res) => {
               margin-bottom: 10px;
             }
             #time-series-section .time-filter-buttons {
-              margin-bottom: 15px;
+              margin-bottom: 6px;
+              width: 460px;
             }
           </style>
         </head>
@@ -704,24 +705,13 @@ router.get("/dashboard", async (req, res) => {
                 paper_bgcolor: "white",
                 plot_bgcolor: "white",
                 font: { size: 12 },
-                showlegend: true,
-                legend: {
-                  orientation: 'v',
-                  x: 1.02,
-                  y: 1,
-                  xanchor: 'left',
-                  yanchor: 'top'
-                }
+                showlegend: false
               };
 
               const successLayout = {
                 ...sharedLayoutConfig,
-                title: {
-                  text: 'Successful Requests per Hour',
-                  font: { size: 22 }
-                },
                 yaxis: {
-                  title: 'Number of Requests',
+                  title: 'Successful Requests / Hour',
                   type: 'linear'
                 },
                 xaxis: {
@@ -732,7 +722,7 @@ router.get("/dashboard", async (req, res) => {
                   zeroline: false,
                   showgrid: true
                 },
-                margin: { t: 40, b: 20, l: 50, r: 25 }
+                margin: { t: 0, b: 20, l: 50, r: 25 }
               };
 
               // Set initial time range to all data
@@ -789,10 +779,6 @@ router.get("/dashboard", async (req, res) => {
 
                 const warningLayout = {
                   ...sharedLayoutConfig,
-                  title: {
-                    text: 'Warning Requests per Hour',
-                    font: { size: 22 }
-                  },
                   xaxis: {
                     ...sharedLayoutConfig.xaxis,
                     range: [initialStartDate, now],  // Use the same initial range
@@ -803,10 +789,10 @@ router.get("/dashboard", async (req, res) => {
                     showgrid: true
                   },
                   yaxis: {
-                    title: 'Number of Warnings',
+                    title: 'Warning Requests / Hour',
                     type: 'linear'
                   },
-                  margin: { t: 40, b: 20, l: 50, r: 25 }
+                  margin: { t: 0, b: 20, l: 50, r: 25 }
                 };
 
                 Plotly.newPlot('warningHistoryPlot', warningTraces, warningLayout).then(() => {
@@ -858,10 +844,6 @@ router.get("/dashboard", async (req, res) => {
 
                   const errorLayout = {
                     ...sharedLayoutConfig,
-                    title: {
-                      text: 'Error Requests per Hour',
-                      font: { size: 22 }
-                    },
                     xaxis: {
                       ...sharedLayoutConfig.xaxis,
                       range: [initialStartDate, now]  // Use the same initial range
@@ -870,7 +852,7 @@ router.get("/dashboard", async (req, res) => {
                       title: 'Number of Errors',
                       type: 'linear'
                     },
-                    margin: { t: 40, b: 120, l: 50, r: 25 }
+                    margin: { t: 0, b: 120, l: 50, r: 25 }
                   };
 
                   Plotly.newPlot('errorHistoryPlot', errorTraces, errorLayout).then(() => {
