@@ -205,11 +205,11 @@ router.get("/dashboard", async (req, res) => {
             // Format metric names to be more readable
             function formatMetricName(name) {
               return name
-                // Only remove the 'n' prefix if it exists, preserve 'ave'
-                .replace(/^n(?!.*ave)/, '')
+                // Only remove the 'n' prefix if it exists, preserve 'med'
+                .replace(/^n(?!.*med)/, '')
                 // Split on capital letters and numbers
-                .match(/[A-Z]{1}[a-z]+|[0-9]+|ave/g)
-                .map(word => word === 'ave' ? 'Ave' : word)
+                .match(/[A-Z]{1}[a-z]+|[0-9]+|med/g)
+                .map(word => word === 'med' ? 'Median' : word)
                 .join(' ');
             }
             
@@ -295,9 +295,9 @@ router.get("/dashboard", async (req, res) => {
 
             // Create time-based gauge charts
             const timeMetrics = [
-              'aveCacheRequestTimeLastHour',
-              'avePoolRequestTimeLastHour',
-              'aveFallbackRequestTimeLastHour'
+              'medCacheRequestTimeLastHour',
+              'medPoolRequestTimeLastHour',
+              'medFallbackRequestTimeLastHour'
             ];
 
             timeMetrics.forEach((key, index) => {
