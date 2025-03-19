@@ -78,6 +78,11 @@ router.get("/dashboard", async (req, res) => {
               height: calc((100vh - 150px) / 3);
               margin-bottom: 0px;
             }
+            /* Make non-time-series hist-plot elements have height equal to window height */
+            .dashboard-section:not(#time-series-section) .hist-plot {
+              height: calc(100vh - 20px);
+              margin-bottom: 20px;
+            }
             #time-series-section .time-filter-buttons {
               margin-bottom: 6px;
               width: 460px;
