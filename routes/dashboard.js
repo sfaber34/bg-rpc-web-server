@@ -902,7 +902,7 @@ router.get("/dashboard", async (req, res) => {
                       range: [initialStartDate, now]  // Use the same initial range
                     },
                     yaxis: {
-                      title: 'Number of Errors',
+                      title: 'Number of Errors / Hour',
                       type: 'linear'
                     },
                     margin: { t: 0, b: 120, l: 50, r: 25 }
