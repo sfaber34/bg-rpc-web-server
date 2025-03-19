@@ -61,7 +61,16 @@ function generateTable(poolNodes) {
       <tbody>
   `;
 
-  for (const [_, data] of Object.entries(poolNodes)) {
+  // Convert the object to an array and sort by owner
+  const nodesArray = Object.entries(poolNodes).map(([_, data]) => data);
+  nodesArray.sort((a, b) => {
+    const ownerA = (a.owner || 'N/A').toLowerCase();
+    const ownerB = (b.owner || 'N/A').toLowerCase();
+    return ownerA.localeCompare(ownerB);
+  });
+
+  // Generate table rows from sorted array
+  for (const data of nodesArray) {
     tableHtml += `
       <tr>
         <td style="padding: 8px;">${data.id || 'N/A'}</td>
