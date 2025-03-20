@@ -227,7 +227,7 @@ router.get("/dashboard", async (req, res) => {
 
             // Calculate shared range based on total requests
             const totalValue = data['nTotalRequestsLastHour'] || 0;
-            const sharedMaxValue = Math.max(totalValue * 2, 100); // Dynamic range that's at least 100
+            const sharedMaxValue = Math.max(totalValue * 1.1, 100); // Dynamic range that's at least 100
 
             // Create total requests gauge
             if ('nTotalRequestsLastHour' in data) {
