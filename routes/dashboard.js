@@ -578,19 +578,20 @@ router.get("/dashboard", async (req, res) => {
                 const solidColor = solidColors[index % solidColors.length];
                 return {
                   type: 'box',
-                  x: Array(5).fill(node),
-                  y: Object.values(distribution),
+                  x: [node],
+                  lowerfence: [distribution.p1],
+                  q1: [distribution.p25],
+                  median: [distribution.p50],
+                  q3: [distribution.p75],
+                  upperfence: [distribution.p99],
                   name: node,
                   boxpoints: false,
                   fillcolor: color,
                   line: {
-                    width: 2,
-                    color: solidColor
+                    color: solidColor,
+                    width: 2
                   },
-                  median: {
-                    color: 'rgb(0,0,0)',
-                    width: 8
-                  }
+                  quartilemethod: "linear"
                 };
               });
 
@@ -630,7 +631,9 @@ router.get("/dashboard", async (req, res) => {
                 paper_bgcolor: "white",
                 plot_bgcolor: "white",
                 font: { size: 12 },
-                showlegend: false
+                showlegend: false,
+                boxgap: 0.2,
+                boxgroupgap: 0
               };
 
               Plotly.newPlot('nodeDurationHist', nodeTraces, nodeLayout);
