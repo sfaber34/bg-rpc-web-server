@@ -449,19 +449,20 @@ router.get("/dashboard", async (req, res) => {
                 const solidColor = solidColors[index % solidColors.length];
                 return {
                   type: 'box',
-                  x: Array(5).fill(method),
-                  y: Object.values(distribution),
+                  x: [method],
+                  lowerfence: [distribution.p1],
+                  q1: [distribution.p25],
+                  median: [distribution.p50],
+                  q3: [distribution.p75],
+                  upperfence: [distribution.p99],
                   name: method,
                   boxpoints: false,
                   fillcolor: color,
                   line: {
-                    width: 2,
-                    color: solidColor
+                    color: solidColor,
+                    width: 2
                   },
-                  median: {
-                    color: 'rgb(0,0,0)',
-                    width: 8
-                  }
+                  quartilemethod: "linear"
                 };
               });
 
@@ -501,7 +502,9 @@ router.get("/dashboard", async (req, res) => {
                 paper_bgcolor: "white",
                 plot_bgcolor: "white",
                 font: { size: 12 },
-                showlegend: false
+                showlegend: false,
+                boxgap: 0.2,
+                boxgroupgap: 0
               };
 
               Plotly.newPlot('methodDurationHist', methodTraces, methodLayout);
@@ -513,19 +516,20 @@ router.get("/dashboard", async (req, res) => {
                 const solidColor = solidColors[index % solidColors.length];
                 return {
                   type: 'box',
-                  x: Array(5).fill(origin),
-                  y: Object.values(distribution),
+                  x: [origin],
+                  lowerfence: [distribution.p1],
+                  q1: [distribution.p25],
+                  median: [distribution.p50],
+                  q3: [distribution.p75],
+                  upperfence: [distribution.p99],
                   name: origin,
                   boxpoints: false,
                   fillcolor: color,
                   line: {
-                    width: 2,
-                    color: solidColor
+                    color: solidColor,
+                    width: 2
                   },
-                  median: {
-                    color: 'rgb(0,0,0)',
-                    width: 8
-                  }
+                  quartilemethod: "linear"
                 };
               });
 
@@ -565,7 +569,9 @@ router.get("/dashboard", async (req, res) => {
                 paper_bgcolor: "white",
                 plot_bgcolor: "white",
                 font: { size: 12 },
-                showlegend: false
+                showlegend: false,
+                boxgap: 0.2,
+                boxgroupgap: 0
               };
 
               Plotly.newPlot('originDurationHist', originTraces, originLayout);
