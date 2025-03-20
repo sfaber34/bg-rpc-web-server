@@ -134,14 +134,14 @@ router.get("/dashboard", async (req, res) => {
           <h1>Dashboard</h1>
           
           <div class="dashboard-section">
-            <h2>Total Requests</h2>
+            <h2>Total Requests Last Hour</h2>
             <div class="dashboard">
               <div id="totalGauge" class="gauge"></div>
             </div>
           </div>
 
           <div class="dashboard-section">
-            <h2>Request Source Metrics</h2>
+            <h2>Request Source Metrics Last Hour</h2>
             <div class="dashboard">
               <div id="gauge2" class="gauge"></div>
               <div id="gauge3" class="gauge"></div>
@@ -150,7 +150,7 @@ router.get("/dashboard", async (req, res) => {
           </div>
 
           <div class="dashboard-section">
-            <h2>Warning Metrics</h2>
+            <h2>Warning Metrics Last Hour</h2>
             <div class="dashboard">
               <div id="warningGauge1" class="gauge"></div>
               <div id="warningGauge2" class="gauge"></div>
@@ -159,7 +159,7 @@ router.get("/dashboard", async (req, res) => {
           </div>
 
           <div class="dashboard-section">
-            <h2>Error Metrics</h2>
+            <h2>Error Metrics Last Hour</h2>
             <div class="dashboard">
               <div id="errorGauge1" class="gauge"></div>
               <div id="errorGauge2" class="gauge"></div>
@@ -168,7 +168,7 @@ router.get("/dashboard", async (req, res) => {
           </div>
 
           <div class="dashboard-section">
-            <h2>Response Time Metrics</h2>
+            <h2>Response Time Metrics Last Hour</h2>
             <div class="dashboard">
               <div id="timeGauge1" class="gauge"></div>
               <div id="timeGauge2" class="gauge"></div>
@@ -212,6 +212,8 @@ router.get("/dashboard", async (req, res) => {
               return name
                 // Only remove the 'n' prefix if it exists, preserve 'med'
                 .replace(/^n(?!.*med)/, '')
+                // Remove LastHour
+                .replace('LastHour', '')
                 // Split on capital letters and numbers
                 .match(/[A-Z]{1}[a-z]+|[0-9]+|med/g)
                 .map(word => word === 'med' ? 'Median' : word)
