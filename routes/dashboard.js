@@ -85,7 +85,7 @@ router.get("/dashboard", async (req, res) => {
             }
             #time-series-section .time-filter-buttons {
               margin-bottom: 6px;
-              width: 460px;
+              width: 540px;
             }
             .filter-legend-container {
               display: flex;
@@ -181,6 +181,7 @@ router.get("/dashboard", async (req, res) => {
             <div class="filter-legend-container">
               <div class="time-filter-buttons">
                 <button class="time-filter-btn" data-range="1">1 Day</button>
+                <button class="time-filter-btn" data-range="3">3 Days</button>
                 <button class="time-filter-btn" data-range="7">1 Week</button>
                 <button class="time-filter-btn" data-range="14">2 Weeks</button>
                 <button class="time-filter-btn" data-range="30">1 Month</button>
