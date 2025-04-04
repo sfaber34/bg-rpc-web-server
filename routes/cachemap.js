@@ -11,10 +11,13 @@ router.get("/cachemap", async (req, res) => {
     // Convert the cacheMap data into table rows
     let tableRows = '';
     for (const [key, data] of Object.entries(cacheMapData)) {
-      const timestamp = new Date(data.timestamp).toLocaleString();
+      // Display null if timestamp is null in the data
+      const timestamp = data.timestamp === null ? 'null' : new Date(data.timestamp).toLocaleString();
+      // Strip the key to only show the method name
+      const displayKey = key.split(':')[0];
       tableRows += `
         <tr>
-          <td>${key}</td>
+          <td>${displayKey}</td>
           <td>${JSON.stringify(data.params)}</td>
           <td>${JSON.stringify(data.value)}</td>
           <td>${timestamp}</td>
@@ -34,7 +37,7 @@ router.get("/cachemap", async (req, res) => {
             table { 
               font-size: 14px;
               width: 100%;
-              max-width: 1200px;
+              max-width: 1480px;
               margin: 20px auto;
               border-collapse: collapse;
             }
@@ -91,10 +94,10 @@ router.get("/cachemap", async (req, res) => {
           <table id="cacheTable">
             <thead>
               <tr>
-                <th data-sort="string">Key</th>
+                <th data-sort="string" class="sort-asc">Key</th>
                 <th data-sort="string">Params</th>
                 <th data-sort="string">Value</th>
-                <th data-sort="number" class="sort-desc">Timestamp</th>
+                <th data-sort="number">Timestamp</th>
               </tr>
             </thead>
             <tbody>
@@ -108,8 +111,8 @@ router.get("/cachemap", async (req, res) => {
               const headers = table.querySelectorAll('th');
               const tbody = table.querySelector('tbody');
 
-              // Sort by Timestamp by default
-              sortTable(3, 'desc');
+              // Sort by Key (asc) by default
+              sortTable(0, 'asc');
 
               headers.forEach((header, index) => {
                 header.addEventListener('click', () => {
@@ -132,8 +135,9 @@ router.get("/cachemap", async (req, res) => {
 
                   if (sortType === 'number') {
                     // For timestamp column, convert to number for proper sorting
-                    aValue = new Date(aValue).getTime();
-                    bValue = new Date(bValue).getTime();
+                    // Handle null values by converting them to 0
+                    aValue = aValue === 'null' ? 0 : new Date(aValue).getTime();
+                    bValue = bValue === 'null' ? 0 : new Date(bValue).getTime();
                   }
 
                   if (direction === 'asc') {
