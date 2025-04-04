@@ -4,11 +4,13 @@ const logsPort = 3001;
 const poolPort = 3003;
 
 const logItemsPerPage = 30;
+const cacheMapModalCharLim = 64;
 
 module.exports = {
   fallbackUrl,
   webServerPort,
   logsPort,
   poolPort,
-  logItemsPerPage
+  logItemsPerPage,
+  cacheMapModalCharLim
 };

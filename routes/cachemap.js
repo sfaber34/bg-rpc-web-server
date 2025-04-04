@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
+
+const { cacheMapModalCharLim } = require('../config');
+
 require('dotenv').config();
 
 router.get("/cachemap", async (req, res) => {
@@ -15,11 +18,24 @@ router.get("/cachemap", async (req, res) => {
       const timestamp = data.timestamp === null ? 'null' : new Date(data.timestamp).toLocaleString();
       // Strip the key to only show the method name
       const displayKey = key.split(':')[0];
+      
+      // Format the value to show as a link if it's too long
+      const valueStr = JSON.stringify(data.value);
+      const displayValue = valueStr.length > cacheMapModalCharLim ? 
+        `<a class="view-object-link" onclick='showModal(${valueStr.replace(/'/g, "\\'")})'>View Value</a>` : 
+        valueStr;
+
+      // Format the params to show as a link if it's too long
+      const paramsStr = JSON.stringify(data.params);
+      const displayParams = paramsStr.length > cacheMapModalCharLim ? 
+        `<a class="view-object-link" onclick='showModal(${paramsStr.replace(/'/g, "\\'")})'>View Params</a>` : 
+        paramsStr;
+
       tableRows += `
         <tr>
           <td>${displayKey}</td>
-          <td>${JSON.stringify(data.params)}</td>
-          <td>${JSON.stringify(data.value)}</td>
+          <td>${displayParams}</td>
+          <td>${displayValue}</td>
           <td>${timestamp}</td>
         </tr>
       `;
@@ -87,9 +103,59 @@ router.get("/cachemap", async (req, res) => {
             .timestamp {
               white-space: nowrap;
             }
+            /* Modal styles */
+            .modal {
+              display: none;
+              position: fixed;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              background-color: rgba(0,0,0,0.5);
+              z-index: 1000;
+            }
+            .modal-content {
+              position: relative;
+              background-color: #fefefe;
+              margin: 5% auto;
+              padding: 20px;
+              border: 1px solid #888;
+              max-width: 80%;
+              max-height: 80vh;
+              overflow-y: auto;
+              border-radius: 5px;
+            }
+            .close-modal {
+              position: absolute;
+              right: 10px;
+              top: 5px;
+              color: #aaa;
+              font-size: 28px;
+              font-weight: bold;
+              cursor: pointer;
+            }
+            .close-modal:hover {
+              color: #000;
+            }
+            .view-object-link {
+              color: #007bff;
+              text-decoration: underline;
+              cursor: pointer;
+            }
+            .view-object-link:hover {
+              color: #0056b3;
+            }
           </style>
         </head>
         <body>
+          <!-- Modal -->
+          <div id="objectModal" class="modal">
+            <div class="modal-content">
+              <span class="close-modal" onclick="closeModal()">&times;</span>
+              <div id="modalContent"></div>
+            </div>
+          </div>
+
           <h1>Cache Map Data</h1>
           <table id="cacheTable">
             <thead>
@@ -106,6 +172,26 @@ router.get("/cachemap", async (req, res) => {
           </table>
 
           <script>
+            function showModal(content) {
+              const modal = document.getElementById('objectModal');
+              const modalContent = document.getElementById('modalContent');
+              modalContent.innerHTML = '<pre>' + JSON.stringify(content, null, 2) + '</pre>';
+              modal.style.display = 'block';
+            }
+
+            function closeModal() {
+              const modal = document.getElementById('objectModal');
+              modal.style.display = 'none';
+            }
+
+            // Close modal when clicking outside
+            window.onclick = function(event) {
+              const modal = document.getElementById('objectModal');
+              if (event.target === modal) {
+                modal.style.display = 'none';
+              }
+            }
+
             document.addEventListener('DOMContentLoaded', function() {
               const table = document.getElementById('cacheTable');
               const headers = table.querySelectorAll('th');
