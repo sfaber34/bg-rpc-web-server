@@ -2,11 +2,11 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 
-const { cacheMapModalCharLim } = require('../config');
+const { cachedDataModalCharLim } = require('../config');
 
 require('dotenv').config();
 
-router.get("/cachemap", async (req, res) => {
+router.get("/cacheddata", async (req, res) => {
   try {
     const response = await axios.get(`https://${process.env.HOST}:3002/cacheMap`);
     const cacheMapData = response.data;
@@ -21,13 +21,13 @@ router.get("/cachemap", async (req, res) => {
       
       // Format the value to show as a link if it's too long
       const valueStr = JSON.stringify(data.value);
-      const displayValue = valueStr.length > cacheMapModalCharLim ? 
+      const displayValue = valueStr.length > cachedDataModalCharLim ? 
         `<a class="view-object-link" onclick='showModal(${valueStr.replace(/'/g, "\\'")})'>View Value</a>` : 
         valueStr;
 
       // Format the params to show as a link if it's too long
       const paramsStr = JSON.stringify(data.params);
-      const displayParams = paramsStr.length > cacheMapModalCharLim ? 
+      const displayParams = paramsStr.length > cachedDataModalCharLim ? 
         `<a class="view-object-link" onclick='showModal(${paramsStr.replace(/'/g, "\\'")})'>View Params</a>` : 
         paramsStr;
 

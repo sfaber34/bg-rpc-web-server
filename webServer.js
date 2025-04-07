@@ -34,7 +34,7 @@ app.use((req, res, next) => {
           <a href="/activenodes" style="margin-right: 15px; color: #333; text-decoration: none;">Active Nodes</a>
           <a href="/requestortable" style="margin-right: 15px; color: #333; text-decoration: none;">Requestor Table</a>
           <a href="/points" style="margin-right: 15px; color: #333; text-decoration: none;">Points</a>
-          <a href="/cachemap" style="margin-right: 15px; color: #333; text-decoration: none;">Cache Map</a>
+          <a href="/cacheddata" style="margin-right: 15px; color: #333; text-decoration: none;">Cached Data</a>
           <a href="/fallbackurl" style="color: #333; text-decoration: none;">Fallback URL</a>
         </div>
       `;
@@ -56,7 +56,7 @@ const logsRouter = require('./routes/logs');
 const activeNodesRouter = require('./routes/activenodes');
 const requestorTableRouter = require('./routes/requestortable');
 const pointsRouter = require('./routes/points');
-const cacheMapRouter = require('./routes/cachemap');
+const cachedDataRouter = require('./routes/cacheddata');
 const fallbackUrlRouter = require('./routes/fallbackurl');
 const nodeContinentsRouter = require('./routes/nodecontinents');
 
@@ -65,7 +65,7 @@ app.use(logsRouter);
 app.use(activeNodesRouter);
 app.use(requestorTableRouter);
 app.use(pointsRouter);
-app.use(cacheMapRouter);
+app.use(cachedDataRouter);
 app.use(fallbackUrlRouter);
 app.use(nodeContinentsRouter);
 
