@@ -44,7 +44,7 @@ router.get("/cacheddata", async (req, res) => {
     res.send(`
       <html>
         <head>
-          <title>Cache Map Data</title>
+          <title>Cached Data</title>
           <style>
             body { 
               font-family: Arial, sans-serif;
@@ -156,7 +156,7 @@ router.get("/cacheddata", async (req, res) => {
             </div>
           </div>
 
-          <h1>Cache Map Data</h1>
+          <h1>Cached Data</h1>
           <table id="cacheTable">
             <thead>
               <tr>
@@ -246,7 +246,7 @@ router.get("/cacheddata", async (req, res) => {
     res.status(500).send(`
       <html>
         <head>
-          <title>Error - Cache Map Data</title>
+          <title>Error - Cached Data</title>
           <style>
             body { padding: 20px; font-family: Arial, sans-serif; }
             .error { color: red; }
