@@ -16,6 +16,8 @@ router.get("/cacheddata", async (req, res) => {
     for (const [key, data] of Object.entries(cacheMapData)) {
       // Display null if timestamp is null in the data
       const timestamp = data.timestamp === null ? 'null' : new Date(data.timestamp).toLocaleString();
+      // Calculate timestamp age in milliseconds
+      const timestampAge = data.timestamp === null ? 'null' : Date.now() - data.timestamp;
       // Strip the key to only show the method name
       const displayKey = key.split(':')[0];
       
@@ -37,6 +39,7 @@ router.get("/cacheddata", async (req, res) => {
           <td>${displayParams}</td>
           <td>${displayValue}</td>
           <td>${timestamp}</td>
+          <td>${timestampAge === 'null' ? 'null' : timestampAge}</td>
         </tr>
       `;
     }
@@ -164,6 +167,7 @@ router.get("/cacheddata", async (req, res) => {
                 <th data-sort="string">Params</th>
                 <th data-sort="string">Value</th>
                 <th data-sort="number">Timestamp</th>
+                <th data-sort="number">Age (ms)</th>
               </tr>
             </thead>
             <tbody>
