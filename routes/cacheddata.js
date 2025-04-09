@@ -18,6 +18,15 @@ router.get("/cacheddata", async (req, res) => {
       const timestamp = data.timestamp === null ? 'null' : new Date(data.timestamp).toLocaleString();
       // Calculate timestamp age in milliseconds
       const timestampAge = data.timestamp === null ? 'null' : Date.now() - data.timestamp;
+      // Convert timestamp age to HH:MM:SS format
+      const formatAge = (ms) => {
+        if (ms === 'null') return 'null';
+        const seconds = Math.floor(ms / 1000);
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const remainingSeconds = seconds % 60;
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+      };
       // Strip the key to only show the method name
       const displayKey = key.split(':')[0];
       
@@ -39,7 +48,7 @@ router.get("/cacheddata", async (req, res) => {
           <td>${displayParams}</td>
           <td>${displayValue}</td>
           <td>${timestamp}</td>
-          <td>${timestampAge === 'null' ? 'null' : timestampAge}</td>
+          <td>${timestampAge === 'null' ? 'null' : formatAge(timestampAge)}</td>
         </tr>
       `;
     }
@@ -167,7 +176,7 @@ router.get("/cacheddata", async (req, res) => {
                 <th data-sort="string">Params</th>
                 <th data-sort="string">Value</th>
                 <th data-sort="number">Timestamp</th>
-                <th data-sort="number">Age (ms)</th>
+                <th data-sort="number">Age</th>
               </tr>
             </thead>
             <tbody>
