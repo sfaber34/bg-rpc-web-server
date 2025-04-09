@@ -439,7 +439,7 @@ router.get("/logs", async (req, res) => {
             h1 { margin-bottom: 30px; }
             h2 { color: #333; margin-bottom: 15px; }
             tr:nth-child(even) { background-color: #f9f9f9; }
-            tr:hover { background-color: #f5f5f5; }
+            tr:hover { background-color:rgb(227, 227, 227); }
             tr.error { background-color: #ffe5e8; }
             tr.error:hover { background-color:rgb(251, 210, 215); }
             tr.warning { background-color:rgb(254, 236, 214); }
