@@ -65,7 +65,7 @@ router.get("/cacheddata", async (req, res) => {
             table { 
               font-size: 14px;
               width: 100%;
-              max-width: 1480px;
+              max-width: 2000px;
               margin: 20px auto;
               border-collapse: collapse;
             }
