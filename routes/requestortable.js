@@ -73,7 +73,7 @@ router.get("/requestortable", async (req, res) => {
               background-color: #f9f9f9;
             }
             tr:hover { 
-              background-color: #f5f5f5;
+              background-color:rgb(227, 227, 227);
             }
             h1 { 
               color: #333;

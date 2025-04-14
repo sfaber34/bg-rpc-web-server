@@ -28,12 +28,13 @@ app.use((req, res, next) => {
     if (typeof body === 'string' && body.includes('<html')) {
       // Create navigation bar HTML
       const navBar = `
-        <div style="background-color: #f8f9fa; padding: 10px; margin-bottom: 20px; font-size: 14pt;">
-          <a href="/dashboard" style="margin-right: 24px; color: #333; text-decoration: none;">Dashboard</a>
-          <a href="/logs" style="margin-right: 24px; color: #333; text-decoration: none;">Logs</a>
-          <a href="/activenodes" style="margin-right: 24px; color: #333; text-decoration: none;">Active Nodes</a>
-          <a href="/requestortable" style="margin-right: 24px; color: #333; text-decoration: none;">Requestor Table</a>
-          <a href="/points" style="margin-right: 24px; color: #333; text-decoration: none;">Points</a>
+        <div style="background-color: #f8f9fa; padding: 10px; margin-bottom: 20px; font-size: 12pt;">
+          <a href="/dashboard" style="margin-right: 15px; color: #333; text-decoration: none;">Dashboard</a>
+          <a href="/logs" style="margin-right: 15px; color: #333; text-decoration: none;">Logs</a>
+          <a href="/activenodes" style="margin-right: 15px; color: #333; text-decoration: none;">Active Nodes</a>
+          <a href="/requestortable" style="margin-right: 15px; color: #333; text-decoration: none;">Requestor Table</a>
+          <a href="/points" style="margin-right: 15px; color: #333; text-decoration: none;">Points</a>
+          <a href="/cacheddata" style="margin-right: 15px; color: #333; text-decoration: none;">Cached Data</a>
           <a href="/fallbackurl" style="color: #333; text-decoration: none;">Fallback URL</a>
         </div>
       `;
@@ -55,6 +56,7 @@ const logsRouter = require('./routes/logs');
 const activeNodesRouter = require('./routes/activenodes');
 const requestorTableRouter = require('./routes/requestortable');
 const pointsRouter = require('./routes/points');
+const cachedDataRouter = require('./routes/cacheddata');
 const fallbackUrlRouter = require('./routes/fallbackurl');
 const nodeContinentsRouter = require('./routes/nodecontinents');
 
@@ -63,6 +65,7 @@ app.use(logsRouter);
 app.use(activeNodesRouter);
 app.use(requestorTableRouter);
 app.use(pointsRouter);
+app.use(cachedDataRouter);
 app.use(fallbackUrlRouter);
 app.use(nodeContinentsRouter);
 

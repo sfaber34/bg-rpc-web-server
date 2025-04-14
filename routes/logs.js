@@ -243,14 +243,14 @@ function renderCompareTable(logs, title, currentPage, tableId, isAjax = false) {
         const parsed = JSON.parse(jsonStr);
         if (typeof parsed === 'object' && parsed !== null && Object.keys(parsed).length > 0) {
           const resultStr = JSON.stringify(parsed);
-          return `<a class="view-object-link" onclick='showModal(${resultStr.replace(/'/g, "\\'")})'>[View Object]</a>`;
+          return `<a class="view-object-link" onclick='showModal(${resultStr.replace(/'/g, "\\'")})'>View Object</a>`;
         }
         return jsonStr.length > 48 ? 
-          `<a class="view-object-link" onclick='showModal("${jsonStr.replace(/"/g, '\\"')}")'>[View Value]</a>` : 
+          `<a class="view-object-link" onclick='showModal("${jsonStr.replace(/"/g, '\\"')}")'>View Value</a>` : 
           jsonStr;
       } catch (e) {
         return result.length > 48 ? 
-          `<a class="view-object-link" onclick='showModal("${result.replace(/"/g, '\\"')}")'>[View Value]</a>` : 
+          `<a class="view-object-link" onclick='showModal("${result.replace(/"/g, '\\"')}")'>View Value</a>` : 
           result;
       }
     }
@@ -258,12 +258,12 @@ function renderCompareTable(logs, title, currentPage, tableId, isAjax = false) {
     // Handle direct objects
     if (typeof result === 'object' && result !== null && Object.keys(result).length > 0) {
       const resultStr = JSON.stringify(result);
-      return `<a class="view-object-link" onclick='showModal(${resultStr.replace(/'/g, "\\'")})'>[View Object]</a>`;
+      return `<a class="view-object-link" onclick='showModal(${resultStr.replace(/'/g, "\\'")})'>View Object</a>`;
     }
     
     // Handle long string values
     if (typeof result === 'string' && result.length > 48) {
-      return `<a class="view-object-link" onclick='showModal("${result.replace(/"/g, '\\"')}")'>[View Value]</a>`;
+      return `<a class="view-object-link" onclick='showModal("${result.replace(/"/g, '\\"')}")'>View Value</a>`;
     }
     return result;
   };
@@ -439,7 +439,7 @@ router.get("/logs", async (req, res) => {
             h1 { margin-bottom: 30px; }
             h2 { color: #333; margin-bottom: 15px; }
             tr:nth-child(even) { background-color: #f9f9f9; }
-            tr:hover { background-color: #f5f5f5; }
+            tr:hover { background-color:rgb(227, 227, 227); }
             tr.error { background-color: #ffe5e8; }
             tr.error:hover { background-color:rgb(251, 210, 215); }
             tr.warning { background-color:rgb(254, 236, 214); }
