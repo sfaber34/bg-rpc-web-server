@@ -629,9 +629,15 @@ router.get("/logs", async (req, res) => {
                 // Update active button state
                 const buttons = document.querySelectorAll(\`#\${tableId} .filter-btn\`);
                 buttons.forEach(btn => btn.classList.remove('active'));
-                const activeButton = Array.from(buttons).find(btn => 
-                  btn.textContent.toLowerCase() === (filter === 'success' && tableId === 'poolCompareResults' ? 'match' : filter).toLowerCase()
-                );
+                const activeButton = Array.from(buttons).find(btn => {
+                  const btnText = btn.textContent.toLowerCase();
+                  if (tableId === 'poolCompareResults') {
+                    if (filter === 'success') return btnText === 'match';
+                    if (filter === 'error') return btnText === 'mismatch';
+                    return btnText === 'all';
+                  }
+                  return btnText === filter.toLowerCase();
+                });
                 if (activeButton) activeButton.classList.add('active');
 
                 // Fetch filtered data
