@@ -173,7 +173,8 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
     <div id="${tableId}" style="margin-bottom: 40px;">
       <h2>${title} (${logs.length} total entries)</h2>
       <div class="filter-buttons" style="margin-bottom: 15px;">
-        <button onclick="filterLogs('${tableId}', 'all')" class="filter-btn active">All</button>
+        <button onclick="filterLogs('${tableId}', 'no-client')" class="filter-btn active">No Client</button>
+        <button onclick="filterLogs('${tableId}', 'all')" class="filter-btn">All</button>
         <button onclick="filterLogs('${tableId}', 'success')" class="filter-btn">Success</button>
         <button onclick="filterLogs('${tableId}', 'warning')" class="filter-btn">Warning</button>
         <button onclick="filterLogs('${tableId}', 'error')" class="filter-btn">Error</button>
@@ -292,7 +293,8 @@ function renderCompareTable(logs, title, currentPage, tableId, isAjax = false) {
     <div id="${tableId}" style="margin-bottom: 40px;">
       <h2>${title} (${logs.length} total entries)</h2>
       <div class="filter-buttons" style="margin-bottom: 15px;">
-        <button onclick="filterLogs('${tableId}', 'all')" class="filter-btn active">All</button>
+        <button onclick="filterLogs('${tableId}', 'no-client')" class="filter-btn active">No Client</button>
+        <button onclick="filterLogs('${tableId}', 'all')" class="filter-btn">All</button>
         <button onclick="filterLogs('${tableId}', 'success')" class="filter-btn">Match</button>
         <button onclick="filterLogs('${tableId}', 'error')" class="filter-btn">Mismatch</button>
       </div>
@@ -351,7 +353,10 @@ router.get("/logs", async (req, res) => {
     if (filter !== 'all') {
       const isSuccess = filter === 'success';
       const isWarning = filter === 'warning';
+      const isNoClient = filter === 'no-client';
       const filterFn = log => {
+        if (isNoClient) return log.origin !== 'buidlguidl-client';
+        
         const status = log.status?.toLowerCase?.() || '';
         if (isSuccess) return status === 'success';
         if (isWarning) {
@@ -546,11 +551,18 @@ router.get("/logs", async (req, res) => {
             let cacheCurrentPage = 1;
             let poolNodeCurrentPage = 1;
             let poolCompareCurrentPage = 1;
-            let poolCurrentFilter = 'all';
-            let fallbackCurrentFilter = 'all';
-            let cacheCurrentFilter = 'all';
+            let poolCurrentFilter = 'no-client';
+            let fallbackCurrentFilter = 'no-client';
+            let cacheCurrentFilter = 'no-client';
             let poolNodeCurrentFilter = 'all';
             let poolCompareCurrentFilter = 'all';
+
+            // Initialize filters on page load
+            window.onload = function() {
+              filterLogs('cacheLogs', 'no-client');
+              filterLogs('poolLogs', 'no-client');
+              filterLogs('fallbackLogs', 'no-client');
+            };
 
             function showModal(content) {
               const modal = document.getElementById('objectModal');
@@ -628,17 +640,20 @@ router.get("/logs", async (req, res) => {
 
                 // Update active button state
                 const buttons = document.querySelectorAll(\`#\${tableId} .filter-btn\`);
-                buttons.forEach(btn => btn.classList.remove('active'));
-                const activeButton = Array.from(buttons).find(btn => {
+                buttons.forEach(btn => {
+                  btn.classList.remove('active');
                   const btnText = btn.textContent.toLowerCase();
-                  if (tableId === 'poolCompareResults') {
-                    if (filter === 'success') return btnText === 'match';
-                    if (filter === 'error') return btnText === 'mismatch';
-                    return btnText === 'all';
+                  const shouldBeActive = (
+                    (filter === 'no-client' && btnText === 'no client') ||
+                    (filter === 'all' && btnText === 'all') ||
+                    (filter === 'success' && (btnText === 'success' || btnText === 'match')) ||
+                    (filter === 'warning' && btnText === 'warning') ||
+                    (filter === 'error' && (btnText === 'error' || btnText === 'mismatch'))
+                  );
+                  if (shouldBeActive) {
+                    btn.classList.add('active');
                   }
-                  return btnText === filter.toLowerCase();
                 });
-                if (activeButton) activeButton.classList.add('active');
 
                 // Fetch filtered data
                 const response = await fetch(\`/logs?page=1&tableId=\${tableId}&filter=\${filter}\`, {
