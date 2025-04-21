@@ -292,7 +292,7 @@ function renderCompareTable(logs, title, currentPage, tableId, isAjax = false) {
   return `
     <div id="${tableId}" style="margin-bottom: 40px;">
       <h2>${title} (${logs.length} total entries)</h2>
-      <div class="filter-buttons" style="margin-bottom: 15px;">
+      <div class="filter-buttons hidden" style="margin-bottom: 15px;">
         <button onclick="filterLogs('${tableId}', 'no-client')" class="filter-btn active">No Client</button>
         <button onclick="filterLogs('${tableId}', 'all')" class="filter-btn">All</button>
         <button onclick="filterLogs('${tableId}', 'success')" class="filter-btn">Match</button>
@@ -543,6 +543,9 @@ router.get("/logs", async (req, res) => {
             }
             .node-id {
               font-weight: bold;
+            }
+            .hidden {
+              display: none !important;
             }
           </style>
           <script>
