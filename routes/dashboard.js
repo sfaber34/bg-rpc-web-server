@@ -143,6 +143,7 @@ router.get("/dashboard", async (req, res) => {
           <div class="dashboard-section">
             <h2>Request Source Metrics Last Hour</h2>
             <div class="dashboard">
+              <div id="clientGauge1" class="gauge"></div>
               <div id="gauge2" class="gauge"></div>
               <div id="gauge3" class="gauge"></div>
               <div id="gauge4" class="gauge"></div>
@@ -152,6 +153,7 @@ router.get("/dashboard", async (req, res) => {
           <div class="dashboard-section">
             <h2>Warning Metrics Last Hour</h2>
             <div class="dashboard">
+              <div id="clientWarningGauge1" class="gauge"></div>
               <div id="warningGauge1" class="gauge"></div>
               <div id="warningGauge2" class="gauge"></div>
               <div id="warningGauge3" class="gauge"></div>
@@ -161,6 +163,7 @@ router.get("/dashboard", async (req, res) => {
           <div class="dashboard-section">
             <h2>Error Metrics Last Hour</h2>
             <div class="dashboard">
+              <div id="clientErrorGauge1" class="gauge"></div>
               <div id="errorGauge1" class="gauge"></div>
               <div id="errorGauge2" class="gauge"></div>
               <div id="errorGauge3" class="gauge"></div>
@@ -170,6 +173,7 @@ router.get("/dashboard", async (req, res) => {
           <div class="dashboard-section">
             <h2>Response Time Metrics Last Hour</h2>
             <div class="dashboard">
+              <div id="clientTimeGauge1" class="gauge"></div>
               <div id="timeGauge1" class="gauge"></div>
               <div id="timeGauge2" class="gauge"></div>
               <div id="timeGauge3" class="gauge"></div>
@@ -257,6 +261,35 @@ router.get("/dashboard", async (req, res) => {
               };
               
               Plotly.newPlot("totalGauge", gaugeData, layout);
+            }
+
+            // Create client request gauge
+            if ('nCacheRequestsClientLastHour' in data) {
+              const value = data['nCacheRequestsClientLastHour'];
+              const gaugeData = [{
+                type: "indicator",
+                mode: "gauge+number",
+                value: value,
+                title: { 
+                  text: formatMetricName('nCacheRequestsClientLastHour'),
+                  font: { size: 22 }
+                },
+                gauge: {
+                  axis: { range: [0, sharedMaxValue] },
+                  bar: { color: "#FF69B4" },    // Pink for Client
+                  bgcolor: "white",
+                  borderwidth: 2,
+                  bordercolor: "#ccc",
+                }
+              }];
+              
+              const layout = {
+                margin: { t: 50, b: 25, l: 25, r: 25 },
+                paper_bgcolor: "white",
+                font: { size: 12 }
+              };
+              
+              Plotly.newPlot("clientGauge1", gaugeData, layout);
             }
 
             // Define source metrics
@@ -417,6 +450,93 @@ router.get("/dashboard", async (req, res) => {
               
               Plotly.newPlot("errorGauge" + (index + 1), gaugeData, layout);
             });
+
+            // Create client warning gauge
+            if ('nWarningCacheRequestsClientLastHour' in data) {
+              const value = data['nWarningCacheRequestsClientLastHour'];
+              const gaugeData = [{
+                type: "indicator",
+                mode: "gauge+number",
+                value: value,
+                title: { 
+                  text: formatMetricName('nWarningCacheRequestsClientLastHour'),
+                  font: { size: 22 }
+                },
+                gauge: {
+                  axis: { range: [0, sharedMaxValue] },
+                  bar: { color: "#FF69B4" },    // Pink for Client
+                  bgcolor: "white",
+                  borderwidth: 2,
+                  bordercolor: "#ccc",
+                }
+              }];
+              
+              const layout = {
+                margin: { t: 50, b: 25, l: 25, r: 25 },
+                paper_bgcolor: "white",
+                font: { size: 12 }
+              };
+              
+              Plotly.newPlot("clientWarningGauge1", gaugeData, layout);
+            }
+
+            // Create client error gauge
+            if ('nErrorCacheRequestsClientLastHour' in data) {
+              const value = data['nErrorCacheRequestsClientLastHour'];
+              const gaugeData = [{
+                type: "indicator",
+                mode: "gauge+number",
+                value: value,
+                title: { 
+                  text: formatMetricName('nErrorCacheRequestsClientLastHour'),
+                  font: { size: 22 }
+                },
+                gauge: {
+                  axis: { range: [0, sharedMaxValue] },
+                  bar: { color: "#FF69B4" },    // Pink for Client
+                  bgcolor: "white",
+                  borderwidth: 2,
+                  bordercolor: "#ccc",
+                }
+              }];
+              
+              const layout = {
+                margin: { t: 50, b: 25, l: 25, r: 25 },
+                paper_bgcolor: "white",
+                font: { size: 12 }
+              };
+              
+              Plotly.newPlot("clientErrorGauge1", gaugeData, layout);
+            }
+
+            // Create client time gauge
+            if ('medCacheRequestClientTimeLastHour' in data) {
+              const value = data['medCacheRequestClientTimeLastHour'] || 0;
+              const gaugeData = [{
+                type: "indicator",
+                mode: "gauge+number",
+                value: value,
+                title: { 
+                  text: formatMetricName('medCacheRequestClientTimeLastHour'),
+                  font: { size: 22 }
+                },
+                gauge: {
+                  axis: { range: [0, 300] },  // Range for milliseconds
+                  bar: { color: "#FF69B4" },    // Pink for Client
+                  bgcolor: "white",
+                  borderwidth: 2,
+                  bordercolor: "#ccc",
+                }
+              }];
+              
+              const layout = {
+                margin: { t: 50, b: 25, l: 25, r: 25 },
+                paper_bgcolor: "white",
+                font: { size: 12 }
+              };
+              
+              Plotly.newPlot("clientTimeGauge1", gaugeData, layout);
+            }
 
             // Define a color palette for the traces
             const colors = [
