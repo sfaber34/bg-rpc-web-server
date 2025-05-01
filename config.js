@@ -12,5 +12,5 @@ module.exports = {
   logsPort,
   poolPort,
   logItemsPerPage,
-  cachedDataModalCharLim
+  cachedDataModalCharLim,
 };

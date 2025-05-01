@@ -7,6 +7,7 @@ const fs = require('fs');
 require('dotenv').config();
 
 const { logsPort, logItemsPerPage } = require('../config');
+const { ignoredErrorCodes } = require('../../shared/ignoredErrorCodes');
 
 // Create an HTTPS agent that uses proper SSL validation
 const httpsAgent = new https.Agent({
@@ -112,7 +113,10 @@ function getRowClass(log) {
     // Only attempt to parse if it looks like JSON
     if (typeof log.status === 'string' && (log.status.startsWith('{') || log.status.startsWith('['))) {
       const statusObj = JSON.parse(log.status);
-      
+      // If error code is in ignored list, do not treat as error or warning
+      if (statusObj?.error?.code !== undefined && ignoredErrorCodes.includes(Number(statusObj.error.code))) {
+        return '';
+      }
       // Check if it contains an error code starting with -69
       if (statusObj?.error?.code && statusObj.error.code.toString().startsWith('-69')) {
         return ' class="warning"';
