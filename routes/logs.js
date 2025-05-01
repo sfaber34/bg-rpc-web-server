@@ -100,7 +100,7 @@ function renderPagination(currentPage, totalPages, baseUrl, tableId) {
 }
 
 function getRowClass(log) {
-  if (log.status.toLowerCase() === 'success') {
+  if (typeof log.status === 'string' && log.status.toLowerCase() === 'success') {
     return '';
   }
 
@@ -113,14 +113,27 @@ function getRowClass(log) {
     // Only attempt to parse if it looks like JSON
     if (typeof log.status === 'string' && (log.status.startsWith('{') || log.status.startsWith('['))) {
       const statusObj = JSON.parse(log.status);
-      // If error code is in ignored list, do not treat as error or warning
-      if (statusObj?.error?.code !== undefined && ignoredErrorCodes.includes(Number(statusObj.error.code))) {
+      // If error code is in ignored list at root or in .error.code, do not treat as error or warning
+      if (
+        (statusObj?.error?.code !== undefined && ignoredErrorCodes.includes(Number(statusObj.error.code))) ||
+        (statusObj?.code !== undefined && ignoredErrorCodes.includes(Number(statusObj.code)))
+      ) {
         return '';
       }
       // Check if it contains an error code starting with -69
-      if (statusObj?.error?.code && statusObj.error.code.toString().startsWith('-69')) {
+      if (
+        (statusObj?.error?.code && statusObj.error.code.toString().startsWith('-69')) ||
+        (statusObj?.code && statusObj.code.toString().startsWith('-69'))
+      ) {
         return ' class="warning"';
       }
+    }
+    // If status is just a number or string error code
+    if (
+      (typeof log.status === 'number' && ignoredErrorCodes.includes(log.status)) ||
+      (typeof log.status === 'string' && !isNaN(log.status) && ignoredErrorCodes.includes(Number(log.status)))
+    ) {
+      return '';
     }
   } catch (e) {
     // If parsing fails, just continue to return error class
