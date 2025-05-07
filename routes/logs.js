@@ -30,6 +30,7 @@ async function fetchLogs(url) {
       .map(log => ({
         timestamp: log.timestamp,
         origin: log.requester || '',
+        ip: log.ip || '',
         method: log.method,
         params: log.params,
         duration: log.elapsed,
@@ -157,6 +158,7 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
   const pageData = logs.slice(startIndex, endIndex);
 
   const isPoolNodeLogs = tableId === 'poolNodeLogs';
+  const isMainRequestTable = tableId === 'cacheLogs' || tableId === 'poolLogs' || tableId === 'fallbackLogs';
   
   if (isAjax) {
     // For AJAX requests, only return the table body and pagination
@@ -166,6 +168,16 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
           <td>${log.timestamp}</td>
           <td>${log.nodeId}</td>
           <td>${log.owner}</td>
+          <td>${log.method}</td>
+          <td>${log.params}</td>
+          <td>${log.duration}</td>
+          <td>${log.status}</td>
+        </tr>
+      ` : isMainRequestTable ? `
+        <tr${getRowClass(log)}>
+          <td>${log.timestamp}</td>
+          <td>${log.origin}</td>
+          <td>${log.ip}</td>
           <td>${log.method}</td>
           <td>${log.params}</td>
           <td>${log.duration}</td>
@@ -207,6 +219,14 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
             <th>Params</th>
             <th>Duration (ms)</th>
             <th>Status</th>
+            ` : isMainRequestTable ? `
+            <th>Timestamp</th>
+            <th>Origin</th>
+            <th>IP</th>
+            <th>Method</th>
+            <th>Params</th>
+            <th>Duration (ms)</th>
+            <th>Status</th>
             ` : `
             <th>Timestamp</th>
             <th>Origin</th>
@@ -223,6 +243,16 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
               <td>${log.timestamp}</td>
               <td>${log.nodeId}</td>
               <td>${log.owner}</td>
+              <td>${log.method}</td>
+              <td>${log.params}</td>
+              <td>${log.duration}</td>
+              <td>${log.status}</td>
+            </tr>
+          ` : isMainRequestTable ? `
+            <tr${getRowClass(log)}>
+              <td>${log.timestamp}</td>
+              <td>${log.origin}</td>
+              <td>${log.ip}</td>
               <td>${log.method}</td>
               <td>${log.params}</td>
               <td>${log.duration}</td>
