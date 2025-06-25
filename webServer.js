@@ -35,7 +35,7 @@ app.use((req, res, next) => {
           <a href="/requestortable" style="margin-right: 15px; color: #333; text-decoration: none;">Requestor Table</a>
           <a href="/points" style="margin-right: 15px; color: #333; text-decoration: none;">Points</a>
           <a href="/cacheddata" style="margin-right: 15px; color: #333; text-decoration: none;">Cached Data</a>
-          <a href="/fallbackurl" style="color: #333; text-decoration: none;">Fallback URL</a>
+          <a href="/fallbackurl" style="margin-right: 15px; color: #333; text-decoration: none;">Fallback URL</a>
         </div>
       `;
       
@@ -59,6 +59,7 @@ const pointsRouter = require('./routes/points');
 const cachedDataRouter = require('./routes/cacheddata');
 const fallbackUrlRouter = require('./routes/fallbackurl');
 const nodeContinentsRouter = require('./routes/nodecontinents');
+const watchdogRouter = require('./routes/watchdog');
 
 app.use(dashboardRouter);
 app.use(logsRouter);
@@ -68,6 +69,7 @@ app.use(pointsRouter);
 app.use(cachedDataRouter);
 app.use(fallbackUrlRouter);
 app.use(nodeContinentsRouter);
+app.use(watchdogRouter);
 
 // Add root redirect to dashboard
 app.get('/', (req, res) => {
