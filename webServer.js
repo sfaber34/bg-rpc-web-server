@@ -59,6 +59,7 @@ const pointsRouter = require('./routes/points');
 const cachedDataRouter = require('./routes/cacheddata');
 const fallbackUrlRouter = require('./routes/fallbackurl');
 const nodeContinentsRouter = require('./routes/nodecontinents');
+const rpcSiteStatsRouter = require('./routes/rpcsitestats');
 const watchdogRouter = require('./routes/watchdog');
 
 app.use(dashboardRouter);
@@ -69,6 +70,7 @@ app.use(pointsRouter);
 app.use(cachedDataRouter);
 app.use(fallbackUrlRouter);
 app.use(nodeContinentsRouter);
+app.use(rpcSiteStatsRouter);
 app.use(watchdogRouter);
 
 // Add root redirect to dashboard
