@@ -128,12 +128,14 @@ app.get('/logout', (req, res) => {
   res.redirect('/login');
 });
 
-// Authentication middleware - protects all routes except login and watchdog
+// Authentication middleware - protects all routes except login, watchdog, yournodes, and rpcsitestats
 app.use((req, res, next) => {
-  // Allow login routes and watchdog endpoint without authentication
+  // Allow login routes, watchdog, yournodes, and rpcsitestats endpoints without authentication
   if (req.path === '/login' || 
       (req.method === 'POST' && req.path === '/login') ||
-      req.path === '/watchdog') {
+      req.path === '/watchdog' ||
+      req.path === '/yournodes' ||
+      req.path === '/rpcsitestats') {
     return next();
   }
   
