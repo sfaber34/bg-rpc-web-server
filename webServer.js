@@ -1,8 +1,10 @@
+require('dotenv').config();
 const https = require("https");
 const express = require("express");
 const fs = require("fs");
 var cors = require("cors");
 var bodyParser = require("body-parser");
+const session = require("express-session");
 const app = express();
 
 const { webServerPort } = require('./config');
@@ -11,11 +13,133 @@ https.globalAgent.options.ca = require("ssl-root-cas").create(); // For sql conn
 
 // Set up middleware first
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Session configuration
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key-change-this',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { 
+    secure: true, // true because we're using HTTPS
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
+// Login page route (not protected)
+app.get('/login', (req, res) => {
+  if (req.session.authenticated) {
+    return res.redirect('/dashboard');
+  }
+  
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Login</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          }
+          .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            width: 300px;
+          }
+          h2 {
+            margin-top: 0;
+            color: #333;
+            text-align: center;
+          }
+          input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 14px;
+          }
+          button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+          }
+          button:hover {
+            background: #5568d3;
+          }
+          .error {
+            color: #d9534f;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="login-container">
+          <h2>🔒 Login Required</h2>
+          <form method="POST" action="/login">
+            <input type="password" name="password" placeholder="Enter password" required autofocus />
+            <button type="submit">Login</button>
+          </form>
+          ${req.query.error ? '<p class="error">Incorrect password</p>' : ''}
+        </div>
+      </body>
+    </html>
+  `);
+});
+
+// Login POST handler
+app.post('/login', (req, res) => {
+  const { password } = req.body;
+  
+  if (password === process.env.SITE_PASSWORD) {
+    req.session.authenticated = true;
+    res.redirect('/dashboard');
+  } else {
+    res.redirect('/login?error=1');
+  }
+});
+
+// Logout route
+app.get('/logout', (req, res) => {
+  req.session.destroy();
+  res.redirect('/login');
+});
+
+// Authentication middleware - protects all routes except login
+app.use((req, res, next) => {
+  if (req.path === '/login' || req.method === 'POST' && req.path === '/login') {
+    return next();
+  }
+  
+  if (!req.session.authenticated) {
+    return res.redirect('/login');
+  }
+  
+  next();
+});
 
 // Add navigation bar middleware
 app.use((req, res, next) => {
@@ -28,14 +152,17 @@ app.use((req, res, next) => {
     if (typeof body === 'string' && body.includes('<html')) {
       // Create navigation bar HTML
       const navBar = `
-        <div style="background-color: #f8f9fa; padding: 10px; margin-bottom: 20px; font-size: 12pt;">
-          <a href="/dashboard" style="margin-right: 15px; color: #333; text-decoration: none;">Dashboard</a>
-          <a href="/logs" style="margin-right: 15px; color: #333; text-decoration: none;">Logs</a>
-          <a href="/activenodes" style="margin-right: 15px; color: #333; text-decoration: none;">Active Nodes</a>
-          <a href="/requestortable" style="margin-right: 15px; color: #333; text-decoration: none;">Requestor Table</a>
-          <a href="/points" style="margin-right: 15px; color: #333; text-decoration: none;">Points</a>
-          <a href="/cacheddata" style="margin-right: 15px; color: #333; text-decoration: none;">Cached Data</a>
-          <a href="/fallbackurl" style="margin-right: 15px; color: #333; text-decoration: none;">Fallback URL</a>
+        <div style="background-color: #f8f9fa; padding: 10px; margin-bottom: 20px; font-size: 12pt; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <a href="/dashboard" style="margin-right: 15px; color: #333; text-decoration: none;">Dashboard</a>
+            <a href="/logs" style="margin-right: 15px; color: #333; text-decoration: none;">Logs</a>
+            <a href="/activenodes" style="margin-right: 15px; color: #333; text-decoration: none;">Active Nodes</a>
+            <a href="/requestortable" style="margin-right: 15px; color: #333; text-decoration: none;">Requestor Table</a>
+            <a href="/points" style="margin-right: 15px; color: #333; text-decoration: none;">Points</a>
+            <a href="/cacheddata" style="margin-right: 15px; color: #333; text-decoration: none;">Cached Data</a>
+            <a href="/fallbackurl" style="margin-right: 15px; color: #333; text-decoration: none;">Fallback URL</a>
+          </div>
+          <a href="/logout" style="color: #d9534f; text-decoration: none; font-weight: bold;">Logout</a>
         </div>
       `;
       
