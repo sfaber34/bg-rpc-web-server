@@ -22,8 +22,15 @@ router.get("/dashboard", async (req, res) => {
     });
     const data = response.data;
 
+    // Fetch node timeout data
+    const nodeTimeoutResponse = await axios.get(`https://${process.env.HOST}:${logsPort}/nodeTimeoutPercentLastWeek`, {
+      httpsAgent
+    });
+    const nodeTimeoutData = nodeTimeoutResponse.data;
+
     // Escape the data for safe injection into script tag
     const safeData = JSON.stringify(data).replace(/\//g, '\\/').replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
+    const safeNodeTimeoutData = JSON.stringify(nodeTimeoutData).replace(/\//g, '\\/').replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
 
     res.send(`
       <html>
@@ -208,9 +215,15 @@ router.get("/dashboard", async (req, res) => {
             <div id="originDurationHist" class="hist-plot"></div>
             <div id="nodeDurationHist" class="hist-plot"></div>
           </div>
+
+          <div class="dashboard-section">
+            <h2>Node Percent Timeout Last Week</h2>
+            <div id="nodeTimeoutChart" class="hist-plot"></div>
+          </div>
           
           <script>
             const data = ${safeData};
+            const nodeTimeoutData = ${safeNodeTimeoutData};
             
             // Format metric names to be more readable
             function formatMetricName(name) {
@@ -1075,6 +1088,89 @@ router.get("/dashboard", async (req, res) => {
                   });
                 });
               });
+            }
+
+            // Create Node Timeout Percent bar chart
+            if (nodeTimeoutData && nodeTimeoutData.length > 0) {
+              // Define a palette of 15 distinct colors for node owners
+              const nodeOwnerColors = [
+                '#1f77b4',  // blue
+                '#ff7f0e',  // orange
+                '#2ca02c',  // green
+                '#d62728',  // red
+                '#9467bd',  // purple
+                '#8c564b',  // brown
+                '#e377c2',  // pink
+                '#7f7f7f',  // gray
+                '#bcbd22',  // yellow-green
+                '#17becf',  // cyan
+                '#aec7e8',  // light blue
+                '#ffbb78',  // light orange
+                '#98df8a',  // light green
+                '#ff9896',  // light red
+                '#c5b0d5'   // light purple
+              ];
+
+              // Group nodes by owner and assign colors consistently
+              const ownerColors = {};
+              let colorIndex = 0;
+              nodeTimeoutData.forEach(node => {
+                if (!ownerColors[node.owner]) {
+                  ownerColors[node.owner] = nodeOwnerColors[colorIndex % nodeOwnerColors.length];
+                  colorIndex++;
+                }
+              });
+
+              // Create bar chart data
+              const nodeIds = nodeTimeoutData.map(node => node.nodeId);
+              const percentages = nodeTimeoutData.map(node => (node.percentTimeoutLastWeek * 100).toFixed(2));
+              const barColors = nodeTimeoutData.map(node => ownerColors[node.owner]);
+              const hoverText = nodeTimeoutData.map(node => 
+                \`Node: \${node.nodeId}<br>Owner: \${node.owner}<br>Timeout: \${(node.percentTimeoutLastWeek * 100).toFixed(2)}%\`
+              );
+
+              const nodeTimeoutTrace = {
+                type: 'bar',
+                x: nodeIds,
+                y: percentages,
+                text: percentages.map(p => \`\${p}%\`),
+                textposition: 'none',
+                hovertemplate: '%{hovertext}<extra></extra>',
+                hovertext: hoverText,
+                marker: {
+                  color: barColors,
+                  line: {
+                    color: 'rgba(0,0,0,0.3)',
+                    width: 1
+                  }
+                }
+              };
+
+              const nodeTimeoutLayout = {
+                title: {
+                  text: 'Node Timeout Percentage Last Week',
+                  font: { size: 22 }
+                },
+                xaxis: {
+                  title: 'Node ID',
+                  tickangle: -45,
+                  tickfont: {
+                    size: 10
+                  }
+                },
+                yaxis: {
+                  title: 'Timeout Percentage (%)',
+                  type: 'linear'
+                },
+                margin: { t: 50, b: 150, l: 60, r: 25 },
+                paper_bgcolor: "white",
+                plot_bgcolor: "white",
+                font: { size: 12 },
+                showlegend: false,
+                bargap: 0.05
+              };
+
+              Plotly.newPlot('nodeTimeoutChart', [nodeTimeoutTrace], nodeTimeoutLayout);
             }
           </script>
         </body>
