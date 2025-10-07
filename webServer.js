@@ -135,6 +135,7 @@ app.use((req, res, next) => {
       (req.method === 'POST' && req.path === '/login') ||
       req.path === '/watchdog' ||
       req.path === '/yournodes' ||
+      req.path === '/nodecontinents' ||
       req.path === '/rpcsitestats') {
     return next();
   }
