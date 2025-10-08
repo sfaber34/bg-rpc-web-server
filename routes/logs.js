@@ -166,19 +166,19 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
           <td>${log.timestamp}</td>
           <td>${log.nodeId}</td>
           <td>${log.owner}</td>
-          <td>${log.method}</td>
-          <td>${log.params}</td>
           <td>${log.duration}</td>
           <td>${log.status}</td>
+          <td>${log.method}</td>
+          <td>${log.params}</td>
         </tr>
       ` : `
         <tr${getRowClass(log)}>
           <td>${log.timestamp}</td>
+          <td>${log.duration}</td>
+          <td>${log.status}</td>
           <td>${log.origin}</td>
           <td>${log.method}</td>
           <td>${log.params}</td>
-          <td>${log.duration}</td>
-          <td>${log.status}</td>
         </tr>
       `).join(''),
       pagination: logs.length > logItemsPerPage ? renderPagination(currentPage, totalPages, '', tableId) : ''
@@ -203,17 +203,17 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
             <th>Timestamp</th>
             <th>Node ID</th>
             <th>Owner</th>
-            <th>Method</th>
-            <th>Params</th>
             <th>Duration (ms)</th>
             <th>Status</th>
+            <th>Method</th>
+            <th>Params</th>
             ` : `
             <th>Timestamp</th>
+            <th>Duration (ms)</th>
+            <th>Status</th>
             <th>Origin</th>
             <th>Method</th>
             <th>Params</th>
-            <th>Duration (ms)</th>
-            <th>Status</th>
             `}
           </tr>
         </thead>
@@ -223,19 +223,19 @@ function renderTable(logs, title, currentPage, tableId, isAjax = false) {
               <td>${log.timestamp}</td>
               <td>${log.nodeId}</td>
               <td>${log.owner}</td>
-              <td>${log.method}</td>
-              <td>${log.params}</td>
               <td>${log.duration}</td>
               <td>${log.status}</td>
+              <td>${log.method}</td>
+              <td>${log.params}</td>
             </tr>
           ` : `
             <tr${getRowClass(log)}>
               <td>${log.timestamp}</td>
+              <td>${log.duration}</td>
+              <td>${log.status}</td>
               <td>${log.origin}</td>
               <td>${log.method}</td>
               <td>${log.params}</td>
-              <td>${log.duration}</td>
-              <td>${log.status}</td>
             </tr>
           `).join('')}
         </tbody>
