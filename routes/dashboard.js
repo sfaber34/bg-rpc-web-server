@@ -28,9 +28,16 @@ router.get("/dashboard", async (req, res) => {
     });
     const nodeTimeoutData = nodeTimeoutResponse.data;
 
+    // Fetch node timeout data for last day
+    const nodeTimeoutDayResponse = await axios.get(`https://${process.env.HOST}:${logsPort}/nodeTimeoutPercentLastDay`, {
+      httpsAgent
+    });
+    const nodeTimeoutDayData = nodeTimeoutDayResponse.data;
+
     // Escape the data for safe injection into script tag
     const safeData = JSON.stringify(data).replace(/\//g, '\\/').replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
     const safeNodeTimeoutData = JSON.stringify(nodeTimeoutData).replace(/\//g, '\\/').replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
+    const safeNodeTimeoutDayData = JSON.stringify(nodeTimeoutDayData).replace(/\//g, '\\/').replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
 
     res.send(`
       <html>
@@ -220,10 +227,16 @@ router.get("/dashboard", async (req, res) => {
             <h2>Node Percent Timeout Last Week</h2>
             <div id="nodeTimeoutChart" class="hist-plot"></div>
           </div>
+
+          <div class="dashboard-section">
+            <h2>Node Percent Timeout Last Day</h2>
+            <div id="nodeTimeoutDayChart" class="hist-plot"></div>
+          </div>
           
           <script>
             const data = ${safeData};
             const nodeTimeoutData = ${safeNodeTimeoutData};
+            const nodeTimeoutDayData = ${safeNodeTimeoutDayData};
             
             // Format metric names to be more readable
             function formatMetricName(name) {
@@ -1090,43 +1103,62 @@ router.get("/dashboard", async (req, res) => {
               });
             }
 
+            // Define a palette of 15 distinct colors for node owners
+            const nodeOwnerColorPalette = [
+              '#1f77b4',  // blue
+              '#ff7f0e',  // orange
+              '#2ca02c',  // green
+              '#d62728',  // red
+              '#9467bd',  // purple
+              '#8c564b',  // brown
+              '#e377c2',  // pink
+              '#7f7f7f',  // gray
+              '#bcbd22',  // yellow-green
+              '#17becf',  // cyan
+              '#aec7e8',  // light blue
+              '#ffbb78',  // light orange
+              '#98df8a',  // light green
+              '#ff9896',  // light red
+              '#c5b0d5'   // light purple
+            ];
+
+            // Create unified color mapping for all owners across both datasets
+            const allOwners = new Set();
+            if (nodeTimeoutData && nodeTimeoutData.length > 0) {
+              nodeTimeoutData.forEach(node => allOwners.add(node.owner));
+            }
+            if (nodeTimeoutDayData && nodeTimeoutDayData.length > 0) {
+              nodeTimeoutDayData.forEach(node => allOwners.add(node.owner));
+            }
+            
+            // Sort owners alphabetically for consistent ordering
+            const sortedOwners = Array.from(allOwners).sort();
+            const ownerColorMapping = {};
+            sortedOwners.forEach((owner, index) => {
+              ownerColorMapping[owner] = nodeOwnerColorPalette[index % nodeOwnerColorPalette.length];
+            });
+
+            // Calculate shared y-axis max for both timeout charts
+            let maxTimeoutPercent = 0;
+            if (nodeTimeoutData && nodeTimeoutData.length > 0) {
+              const maxWeek = Math.max(...nodeTimeoutData.map(node => node.percentTimeout * 100));
+              maxTimeoutPercent = Math.max(maxTimeoutPercent, maxWeek);
+            }
+            if (nodeTimeoutDayData && nodeTimeoutDayData.length > 0) {
+              const maxDay = Math.max(...nodeTimeoutDayData.map(node => node.percentTimeout * 100));
+              maxTimeoutPercent = Math.max(maxTimeoutPercent, maxDay);
+            }
+            // Add 10% padding to the max value for better visualization
+            const sharedYAxisMax = maxTimeoutPercent * 1.1;
+
             // Create Node Timeout Percent bar chart
             if (nodeTimeoutData && nodeTimeoutData.length > 0) {
-              // Define a palette of 15 distinct colors for node owners
-              const nodeOwnerColors = [
-                '#1f77b4',  // blue
-                '#ff7f0e',  // orange
-                '#2ca02c',  // green
-                '#d62728',  // red
-                '#9467bd',  // purple
-                '#8c564b',  // brown
-                '#e377c2',  // pink
-                '#7f7f7f',  // gray
-                '#bcbd22',  // yellow-green
-                '#17becf',  // cyan
-                '#aec7e8',  // light blue
-                '#ffbb78',  // light orange
-                '#98df8a',  // light green
-                '#ff9896',  // light red
-                '#c5b0d5'   // light purple
-              ];
-
-              // Group nodes by owner and assign colors consistently
-              const ownerColors = {};
-              let colorIndex = 0;
-              nodeTimeoutData.forEach(node => {
-                if (!ownerColors[node.owner]) {
-                  ownerColors[node.owner] = nodeOwnerColors[colorIndex % nodeOwnerColors.length];
-                  colorIndex++;
-                }
-              });
-
               // Create bar chart data
-              const nodeIds = nodeTimeoutData.map(node => node.nodeId);
-              const percentages = nodeTimeoutData.map(node => (node.percentTimeoutLastWeek * 100).toFixed(2));
-              const barColors = nodeTimeoutData.map(node => ownerColors[node.owner]);
+              const nodeIds = nodeTimeoutData.map(node => node.nodeIdPretty);
+              const percentages = nodeTimeoutData.map(node => (node.percentTimeout * 100).toFixed(2));
+              const barColors = nodeTimeoutData.map(node => ownerColorMapping[node.owner]);
               const hoverText = nodeTimeoutData.map(node => 
-                \`Node: \${node.nodeId}<br>Owner: \${node.owner}<br>Timeout: \${(node.percentTimeoutLastWeek * 100).toFixed(2)}%\`
+                \`Node: \${node.nodeIdPretty}<br>Owner: \${node.owner}<br>Timeout: \${(node.percentTimeout * 100).toFixed(2)}%\`
               );
 
               const nodeTimeoutTrace = {
@@ -1160,7 +1192,8 @@ router.get("/dashboard", async (req, res) => {
                 },
                 yaxis: {
                   title: 'Timeout Percentage (%)',
-                  type: 'linear'
+                  type: 'linear',
+                  range: [0, sharedYAxisMax]
                 },
                 margin: { t: 50, b: 150, l: 60, r: 25 },
                 paper_bgcolor: "white",
@@ -1171,6 +1204,61 @@ router.get("/dashboard", async (req, res) => {
               };
 
               Plotly.newPlot('nodeTimeoutChart', [nodeTimeoutTrace], nodeTimeoutLayout);
+            }
+
+            // Create Node Timeout Percent bar chart for last day
+            if (nodeTimeoutDayData && nodeTimeoutDayData.length > 0) {
+              // Create bar chart data
+              const nodeDayIds = nodeTimeoutDayData.map(node => node.nodeIdPretty);
+              const percentagesDay = nodeTimeoutDayData.map(node => (node.percentTimeout * 100).toFixed(2));
+              const barDayColors = nodeTimeoutDayData.map(node => ownerColorMapping[node.owner]);
+              const hoverDayText = nodeTimeoutDayData.map(node => 
+                \`Node: \${node.nodeIdPretty}<br>Owner: \${node.owner}<br>Timeout: \${(node.percentTimeout * 100).toFixed(2)}%\`
+              );
+
+              const nodeTimeoutDayTrace = {
+                type: 'bar',
+                x: nodeDayIds,
+                y: percentagesDay,
+                text: percentagesDay.map(p => \`\${p}%\`),
+                textposition: 'none',
+                hovertemplate: '%{hovertext}<extra></extra>',
+                hovertext: hoverDayText,
+                marker: {
+                  color: barDayColors,
+                  line: {
+                    color: 'rgba(0,0,0,0.3)',
+                    width: 1
+                  }
+                }
+              };
+
+              const nodeTimeoutDayLayout = {
+                title: {
+                  text: 'Node Timeout Percentage Last Day',
+                  font: { size: 22 }
+                },
+                xaxis: {
+                  title: 'Node ID',
+                  tickangle: -45,
+                  tickfont: {
+                    size: 10
+                  }
+                },
+                yaxis: {
+                  title: 'Timeout Percentage (%)',
+                  type: 'linear',
+                  range: [0, sharedYAxisMax]
+                },
+                margin: { t: 50, b: 150, l: 60, r: 25 },
+                paper_bgcolor: "white",
+                plot_bgcolor: "white",
+                font: { size: 12 },
+                showlegend: false,
+                bargap: 0.05
+              };
+
+              Plotly.newPlot('nodeTimeoutDayChart', [nodeTimeoutDayTrace], nodeTimeoutDayLayout);
             }
           </script>
         </body>
