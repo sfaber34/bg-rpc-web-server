@@ -800,7 +800,9 @@ router.get("/dashboard", async (req, res) => {
               // Function to update time range for all plots
               function updateTimeRange(days) {
                 const now = new Date();
+                const nowISO = now.toISOString();
                 let startDate = days === 'all' ? null : new Date(now - (days * 24 * 60 * 60 * 1000));
+                let startDateISO = startDate ? startDate.toISOString() : new Date(data.requestHistory[0].hourMs).toISOString();
                 
                 // Update button styles
                 document.querySelectorAll('.time-filter-btn').forEach(btn => {
@@ -811,8 +813,8 @@ router.get("/dashboard", async (req, res) => {
                 });
 
                 const newRange = days === 'all' ? 
-                  [data.requestHistory[0].hourMs, now] : 
-                  [startDate, now];
+                  [new Date(data.requestHistory[0].hourMs).toISOString(), nowISO] : 
+                  [startDateISO, nowISO];
 
                 ['requestHistoryPlot', 'warningHistoryPlot', 'errorHistoryPlot'].forEach(plotId => {
                   const plot = document.getElementById(plotId);
@@ -863,7 +865,7 @@ router.get("/dashboard", async (req, res) => {
               const traces = [
                 {
                   name: 'Cache Requests',
-                  x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                  x: data.requestHistory.map(entry => new Date(entry.hourMs).toISOString()),
                   y: data.requestHistory.map(entry => entry.nCacheRequestsSuccess),
                   type: 'scatter',
                   mode: 'lines',
@@ -877,7 +879,7 @@ router.get("/dashboard", async (req, res) => {
                 },
                 {
                   name: 'Pool Requests',
-                  x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                  x: data.requestHistory.map(entry => new Date(entry.hourMs).toISOString()),
                   y: data.requestHistory.map(entry => entry.nPoolRequestsSuccess),
                   type: 'scatter',
                   mode: 'lines',
@@ -891,7 +893,7 @@ router.get("/dashboard", async (req, res) => {
                 },
                 {
                   name: 'Fallback Requests',
-                  x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                  x: data.requestHistory.map(entry => new Date(entry.hourMs).toISOString()),
                   y: data.requestHistory.map(entry => entry.nFallbackRequestsSuccess),
                   type: 'scatter',
                   mode: 'lines',
@@ -908,9 +910,9 @@ router.get("/dashboard", async (req, res) => {
               // Define shared layout properties
               const sharedLayoutConfig = {
                 xaxis: {
-                  title: 'Time',
+                  title: 'Time (UTC)',
                   type: 'date',
-                  tickformat: '%Y-%m-%d %H:%M',
+                  tickformat: '%Y-%m-%d %H:%M UTC',
                   tickangle: -45
                 },
                 margin: { t: 50, b: 120, l: 50, r: 25 },
@@ -938,8 +940,8 @@ router.get("/dashboard", async (req, res) => {
               };
 
               // Set initial time range to all data
-              const now = new Date();
-              const initialStartDate = new Date(data.requestHistory[0].hourMs);
+              const now = new Date().toISOString();
+              const initialStartDate = new Date(data.requestHistory[0].hourMs).toISOString();
               successLayout.xaxis.range = [initialStartDate, now];
 
               Plotly.newPlot('requestHistoryPlot', traces, successLayout).then(gd => {
@@ -947,7 +949,7 @@ router.get("/dashboard", async (req, res) => {
                 const warningTraces = [
                   {
                     name: 'Cache Warnings',
-                    x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                    x: data.requestHistory.map(entry => new Date(entry.hourMs).toISOString()),
                     y: data.requestHistory.map(entry => entry.nCacheRequestsWarning),
                     type: 'scatter',
                     mode: 'lines',
@@ -961,7 +963,7 @@ router.get("/dashboard", async (req, res) => {
                   },
                   {
                     name: 'Pool Warnings',
-                    x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                    x: data.requestHistory.map(entry => new Date(entry.hourMs).toISOString()),
                     y: data.requestHistory.map(entry => entry.nPoolRequestsWarning),
                     type: 'scatter',
                     mode: 'lines',
@@ -975,7 +977,7 @@ router.get("/dashboard", async (req, res) => {
                   },
                   {
                     name: 'Fallback Warnings',
-                    x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                    x: data.requestHistory.map(entry => new Date(entry.hourMs).toISOString()),
                     y: data.requestHistory.map(entry => entry.nFallbackRequestsWarning),
                     type: 'scatter',
                     mode: 'lines',
@@ -1012,7 +1014,7 @@ router.get("/dashboard", async (req, res) => {
                   const errorTraces = [
                     {
                       name: 'Cache Errors',
-                      x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                      x: data.requestHistory.map(entry => new Date(entry.hourMs).toISOString()),
                       y: data.requestHistory.map(entry => entry.nCacheRequestsError),
                       type: 'scatter',
                       mode: 'lines',
@@ -1026,7 +1028,7 @@ router.get("/dashboard", async (req, res) => {
                     },
                     {
                       name: 'Pool Errors',
-                      x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                      x: data.requestHistory.map(entry => new Date(entry.hourMs).toISOString()),
                       y: data.requestHistory.map(entry => entry.nPoolRequestsError),
                       type: 'scatter',
                       mode: 'lines',
@@ -1040,7 +1042,7 @@ router.get("/dashboard", async (req, res) => {
                     },
                     {
                       name: 'Fallback Errors',
-                      x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                      x: data.requestHistory.map(entry => new Date(entry.hourMs).toISOString()),
                       y: data.requestHistory.map(entry => entry.nFallbackRequestsError),
                       type: 'scatter',
                       mode: 'lines',
