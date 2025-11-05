@@ -20,7 +20,7 @@ router.get("/iptable", async (req, res) => {
     const collectionName = process.env.FIREBASE_COLLECTION;
     const snapshot = await db.collection(collectionName)
       .orderBy('requestsTotal', 'desc')
-      .limit(100)
+      .limit(200)
       .get();
     
     // Convert Firestore snapshot to array of objects
