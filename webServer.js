@@ -164,6 +164,7 @@ app.use((req, res, next) => {
             <a href="/logs" style="margin-right: 15px; color: #333; text-decoration: none;">Logs</a>
             <a href="/activenodes" style="margin-right: 15px; color: #333; text-decoration: none;">Active Nodes</a>
             <a href="/requestortable" style="margin-right: 15px; color: #333; text-decoration: none;">Requestor Table</a>
+            <a href="/iptable" style="margin-right: 15px; color: #333; text-decoration: none;">IP Table</a>
             <a href="/points" style="margin-right: 15px; color: #333; text-decoration: none;">Points</a>
             <a href="/cacheddata" style="margin-right: 15px; color: #333; text-decoration: none;">Cached Data</a>
             <a href="/fallbackurl" style="margin-right: 15px; color: #333; text-decoration: none;">Fallback URL</a>
@@ -195,6 +196,7 @@ const nodeContinentsRouter = require('./routes/nodecontinents');
 const rpcSiteStatsRouter = require('./routes/rpcsitestats');
 const yourNodesRouter = require('./routes/yournodes');
 const watchdogRouter = require('./routes/watchdog');
+const ipTableRouter = require('./routes/iptable');
 
 app.use(dashboardRouter);
 app.use(logsRouter);
@@ -207,6 +209,7 @@ app.use(nodeContinentsRouter);
 app.use(rpcSiteStatsRouter);
 app.use(yourNodesRouter);
 app.use(watchdogRouter);
+app.use(ipTableRouter);
 
 // Add root redirect to dashboard
 app.get('/', (req, res) => {
