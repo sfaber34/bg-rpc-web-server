@@ -16,9 +16,12 @@ router.get("/iptable", async (req, res) => {
     // Get Firestore database instance
     const db = admin.firestore();
     
-    // Query the Firebase Firestore collection
+    // Query the Firebase Firestore collection - get top 100 by requests total
     const collectionName = process.env.FIREBASE_COLLECTION;
-    const snapshot = await db.collection(collectionName).get();
+    const snapshot = await db.collection(collectionName)
+      .orderBy('requestsTotal', 'desc')
+      .limit(100)
+      .get();
     
     // Convert Firestore snapshot to array of objects
     const data = [];
@@ -51,26 +54,32 @@ router.get("/iptable", async (req, res) => {
       `);
     }
 
-    // Build table rows from Firestore data
+    // Build table rows from Firestore data - map fields to columns in correct order
     let tableRows = '';
     data.forEach((rowData) => {
-      const cells = Object.entries(rowData)
-        .map(([field, val]) => {
-          const displayValue = typeof val === 'object' ? JSON.stringify(val) : val;
-          return `<td>${displayValue}</td>`;
-        })
-        .join('');
-      tableRows += `<tr>${cells}</tr>`;
+      // Extract fields in the correct order matching headers
+      const ip = rowData.id || rowData.ip || '';
+      const origins = typeof rowData.origins === 'object' ? JSON.stringify(rowData.origins) : (rowData.origins || '');
+      const requestsLastHour = rowData.requestsLastHour || 0;
+      const requestsTotal = rowData.requestsTotal || 0;
+      
+      tableRows += `
+        <tr>
+          <td>${ip}</td>
+          <td>${origins}</td>
+          <td>${requestsLastHour}</td>
+          <td>${requestsTotal}</td>
+        </tr>
+      `;
     });
 
-    // Get column headers from the first entry
-    let headerCells = '';
-    if (data.length > 0 && typeof data[0] === 'object') {
-      const headers = Object.keys(data[0]);
-      headerCells = headers
-        .map(header => `<th data-sort="string">${header}</th>`)
-        .join('');
-    }
+    // Define custom header names
+    const headerCells = `
+      <th data-sort="string">IP</th>
+      <th data-sort="string">Origins</th>
+      <th data-sort="number">Requests Last Hour</th>
+      <th data-sort="number">Requests Total</th>
+    `;
 
     res.send(`
       <html>
