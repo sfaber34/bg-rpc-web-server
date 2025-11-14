@@ -1,33 +1,74 @@
 const express = require('express');
 const router = express.Router();
-const admin = require('firebase-admin');
+const { Pool } = require('pg');
+const { SecretsManagerClient, GetSecretValueCommand } = require("@aws-sdk/client-secrets-manager");
+const path = require('path');
+const fs = require('fs');
 
-// Initialize Firebase Admin if not already initialized
-if (!admin.apps.length) {
-  const serviceAccount = require('../firebase-service-account.json');
-  
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
+// Load .env from the project root directory
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+
+async function getDbConnection() {
+  try {
+    if (!process.env.RDS_SECRET_NAME || !process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY || !process.env.DB_HOST) {
+      throw new Error('Required environment variables are missing. Please check your .env file.');
+    }
+
+    const secret_name = process.env.RDS_SECRET_NAME;
+    const secretsClient = new SecretsManagerClient({ 
+      region: "us-east-1",
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      }
+    });
+
+    const command = new GetSecretValueCommand({
+      SecretId: secret_name,
+      VersionStage: "AWSCURRENT",
+    });
+    const data = await secretsClient.send(command);
+    const secret = JSON.parse(data.SecretString);
+
+    const dbConfig = {
+      host: process.env.DB_HOST,
+      user: secret.username,
+      password: secret.password,
+      database: secret.dbname || 'postgres',
+      port: 5432,
+      ssl: {
+        rejectUnauthorized: true,
+        ca: fs.readFileSync('/home/ubuntu/shared/rds-ca-bundle.pem')
+      }
+    };
+
+    return new Pool(dbConfig);
+  } catch (error) {
+    console.error('Error setting up database connection:', error);
+    throw error;
+  }
+}
+
+async function getIpTableData() {
+  let pool;
+  try {
+    pool = await getDbConnection();
+    const result = await pool.query('SELECT ip, origins, requests_last_hour, requests_total, last_reset_timestamp, updated_at FROM ip_table ORDER BY requests_total DESC LIMIT 200');
+    return result.rows;
+  } catch (error) {
+    console.error('Error getting IP table data:', error);
+    throw error;
+  } finally {
+    if (pool) {
+      await pool.end();
+    }
+  }
 }
 
 router.get("/iptable", async (req, res) => {
   try {
-    // Get Firestore database instance
-    const db = admin.firestore();
-    
-    // Query the Firebase Firestore collection - get top 100 by requests total
-    const collectionName = process.env.FIREBASE_COLLECTION;
-    const snapshot = await db.collection(collectionName)
-      .orderBy('requestsTotal', 'desc')
-      .limit(200)
-      .get();
-    
-    // Convert Firestore snapshot to array of objects
-    const data = [];
-    snapshot.forEach(doc => {
-      data.push({ id: doc.id, ...doc.data() });
-    });
+    // Query the RDS database - get top 200 by requests total
+    const data = await getIpTableData();
 
     if (data.length === 0) {
       return res.send(`
@@ -54,14 +95,46 @@ router.get("/iptable", async (req, res) => {
       `);
     }
 
-    // Build table rows from Firestore data - map fields to columns in correct order
+    // Build table rows from RDS data - map fields to columns in correct order
     let tableRows = '';
     data.forEach((rowData) => {
       // Extract fields in the correct order matching headers
-      const ip = rowData.id || rowData.ip || '';
+      const ip = rowData.ip || '';
       const origins = typeof rowData.origins === 'object' ? JSON.stringify(rowData.origins) : (rowData.origins || '');
-      const requestsLastHour = rowData.requestsLastHour || 0;
-      const requestsTotal = rowData.requestsTotal || 0;
+      const requestsLastHour = rowData.requests_last_hour || 0;
+      const requestsTotal = rowData.requests_total || 0;
+      
+      // Format timestamps - handle epoch timestamps (numbers/strings), Date objects, and string formats
+      const formatTimestamp = (ts) => {
+        if (!ts) return '';
+        try {
+          let date;
+          // Check if it's a number or numeric string (epoch timestamp in seconds)
+          const numericValue = Number(ts);
+          if (!isNaN(numericValue) && numericValue > 1000000000 && numericValue < 10000000000) {
+            // Likely an epoch timestamp in seconds (10 digits)
+            date = new Date(numericValue * 1000); // Convert seconds to milliseconds
+          } else if (ts instanceof Date) {
+            date = ts;
+          } else {
+            date = new Date(ts);
+          }
+          return isNaN(date.getTime()) ? ts : date.toLocaleString('en-US', { 
+            year: 'numeric', 
+            month: '2-digit', 
+            day: '2-digit', 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit',
+            hour12: false 
+          });
+        } catch (e) {
+          return ts;
+        }
+      };
+      
+      const lastResetTimestamp = formatTimestamp(rowData.last_reset_timestamp);
+      const updatedAt = formatTimestamp(rowData.updated_at);
       
       tableRows += `
         <tr>
@@ -69,6 +142,8 @@ router.get("/iptable", async (req, res) => {
           <td>${origins}</td>
           <td>${requestsLastHour}</td>
           <td>${requestsTotal}</td>
+          <td>${lastResetTimestamp}</td>
+          <td>${updatedAt}</td>
         </tr>
       `;
     });
@@ -79,6 +154,8 @@ router.get("/iptable", async (req, res) => {
       <th data-sort="string">Origins</th>
       <th data-sort="number">Requests Last Hour</th>
       <th data-sort="number">Requests Total</th>
+      <th data-sort="string">Last Reset</th>
+      <th data-sort="string">Updated At</th>
     `;
 
     res.send(`
@@ -205,7 +282,7 @@ router.get("/iptable", async (req, res) => {
       </html>
     `);
   } catch (error) {
-    console.error('Error fetching IP table data from Firestore:', error);
+    console.error('Error fetching IP table data from RDS:', error);
     res.status(500).send(`
       <html>
         <head>
@@ -218,8 +295,7 @@ router.get("/iptable", async (req, res) => {
         <body>
           <h1>Error Fetching IP Table Data</h1>
           <p class="error">${error.message}</p>
-          <p>Please check your Firebase configuration and Firestore collection name.</p>
-          <p>Collection: ${process.env.FIREBASE_COLLECTION || 'stageIps'}</p>
+          <p>Please check your RDS database connection and ip_table schema.</p>
         </body>
       </html>
     `);
