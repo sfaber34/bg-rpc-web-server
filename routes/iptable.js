@@ -53,7 +53,7 @@ async function getIpTableData() {
   let pool;
   try {
     pool = await getDbConnection();
-    const result = await pool.query('SELECT ip, origins, requests_last_hour, requests_total, last_reset_timestamp, updated_at FROM ip_table ORDER BY requests_total DESC LIMIT 200');
+    const result = await pool.query('SELECT ip, origins, requests_last_hour, requests_total, last_reset_timestamp, updated_at FROM ip_table ORDER BY requests_total DESC');
     return result.rows;
   } catch (error) {
     console.error('Error getting IP table data:', error);
