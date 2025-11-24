@@ -148,6 +148,9 @@ router.get("/iptable", async (req, res) => {
       `;
     });
 
+    // Calculate total requests last hour
+    const totalRequestsLastHour = data.reduce((sum, row) => sum + (row.requests_last_hour || 0), 0);
+
     // Define custom header names
     const headerCells = `
       <th data-sort="string">IP</th>
@@ -224,7 +227,7 @@ router.get("/iptable", async (req, res) => {
         </head>
         <body>
           <h1>IP Table</h1>
-          <div class="stats">Total entries: ${data.length}</div>
+          <div class="stats">Total entries: ${data.length} | Total requests last hour: ${totalRequestsLastHour}</div>
           <table id="ipTable">
             <thead>
               <tr>
