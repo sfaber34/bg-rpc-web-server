@@ -811,8 +811,8 @@ router.get("/dashboard", async (req, res) => {
                 });
 
                 const newRange = days === 'all' ? 
-                  [data.requestHistory[0].hourMs, now] : 
-                  [startDate, now];
+                  [new Date(data.requestHistory[0].hourMs).toISOString(), now.toISOString()] : 
+                  [startDate.toISOString(), now.toISOString()];
 
                 ['requestHistoryPlot', 'warningHistoryPlot', 'errorHistoryPlot'].forEach(plotId => {
                   const plot = document.getElementById(plotId);
@@ -863,7 +863,7 @@ router.get("/dashboard", async (req, res) => {
               const traces = [
                 {
                   name: 'Cache Requests',
-                  x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                  x: data.requestHistory.map(entry => new Date(entry.hourMs).toISOString()),
                   y: data.requestHistory.map(entry => entry.nCacheRequestsSuccess),
                   type: 'scatter',
                   mode: 'lines',
@@ -877,7 +877,7 @@ router.get("/dashboard", async (req, res) => {
                 },
                 {
                   name: 'Pool Requests',
-                  x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                  x: data.requestHistory.map(entry => new Date(entry.hourMs).toISOString()),
                   y: data.requestHistory.map(entry => entry.nPoolRequestsSuccess),
                   type: 'scatter',
                   mode: 'lines',
@@ -891,7 +891,7 @@ router.get("/dashboard", async (req, res) => {
                 },
                 {
                   name: 'Fallback Requests',
-                  x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                  x: data.requestHistory.map(entry => new Date(entry.hourMs).toISOString()),
                   y: data.requestHistory.map(entry => entry.nFallbackRequestsSuccess),
                   type: 'scatter',
                   mode: 'lines',
@@ -908,7 +908,7 @@ router.get("/dashboard", async (req, res) => {
               // Define shared layout properties
               const sharedLayoutConfig = {
                 xaxis: {
-                  title: 'Time',
+                  title: 'Time (UTC)',
                   type: 'date',
                   tickformat: '%Y-%m-%d %H:%M',
                   tickangle: -45
@@ -940,14 +940,14 @@ router.get("/dashboard", async (req, res) => {
               // Set initial time range to all data
               const now = new Date();
               const initialStartDate = new Date(data.requestHistory[0].hourMs);
-              successLayout.xaxis.range = [initialStartDate, now];
+              successLayout.xaxis.range = [initialStartDate.toISOString(), now.toISOString()];
 
               Plotly.newPlot('requestHistoryPlot', traces, successLayout).then(gd => {
                 // Create warning request history line plot with matching x-axis range
                 const warningTraces = [
                   {
                     name: 'Cache Warnings',
-                    x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                    x: data.requestHistory.map(entry => new Date(entry.hourMs).toISOString()),
                     y: data.requestHistory.map(entry => entry.nCacheRequestsWarning),
                     type: 'scatter',
                     mode: 'lines',
@@ -961,7 +961,7 @@ router.get("/dashboard", async (req, res) => {
                   },
                   {
                     name: 'Pool Warnings',
-                    x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                    x: data.requestHistory.map(entry => new Date(entry.hourMs).toISOString()),
                     y: data.requestHistory.map(entry => entry.nPoolRequestsWarning),
                     type: 'scatter',
                     mode: 'lines',
@@ -975,7 +975,7 @@ router.get("/dashboard", async (req, res) => {
                   },
                   {
                     name: 'Fallback Warnings',
-                    x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                    x: data.requestHistory.map(entry => new Date(entry.hourMs).toISOString()),
                     y: data.requestHistory.map(entry => entry.nFallbackRequestsWarning),
                     type: 'scatter',
                     mode: 'lines',
@@ -993,7 +993,7 @@ router.get("/dashboard", async (req, res) => {
                   ...sharedLayoutConfig,
                   xaxis: {
                     ...sharedLayoutConfig.xaxis,
-                    range: [initialStartDate, now],  // Use the same initial range
+                    range: [initialStartDate.toISOString(), now.toISOString()],  // Use the same initial range
                     showticklabels: false,
                     ticks: '',
                     title: '',
@@ -1012,7 +1012,7 @@ router.get("/dashboard", async (req, res) => {
                   const errorTraces = [
                     {
                       name: 'Cache Errors',
-                      x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                      x: data.requestHistory.map(entry => new Date(entry.hourMs).toISOString()),
                       y: data.requestHistory.map(entry => entry.nCacheRequestsError),
                       type: 'scatter',
                       mode: 'lines',
@@ -1026,7 +1026,7 @@ router.get("/dashboard", async (req, res) => {
                     },
                     {
                       name: 'Pool Errors',
-                      x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                      x: data.requestHistory.map(entry => new Date(entry.hourMs).toISOString()),
                       y: data.requestHistory.map(entry => entry.nPoolRequestsError),
                       type: 'scatter',
                       mode: 'lines',
@@ -1040,7 +1040,7 @@ router.get("/dashboard", async (req, res) => {
                     },
                     {
                       name: 'Fallback Errors',
-                      x: data.requestHistory.map(entry => new Date(entry.hourMs)),
+                      x: data.requestHistory.map(entry => new Date(entry.hourMs).toISOString()),
                       y: data.requestHistory.map(entry => entry.nFallbackRequestsError),
                       type: 'scatter',
                       mode: 'lines',
@@ -1058,7 +1058,7 @@ router.get("/dashboard", async (req, res) => {
                     ...sharedLayoutConfig,
                     xaxis: {
                       ...sharedLayoutConfig.xaxis,
-                      range: [initialStartDate, now]  // Use the same initial range
+                      range: [initialStartDate.toISOString(), now.toISOString()]  // Use the same initial range
                     },
                     yaxis: {
                       title: 'Number of Errors / Hour',
