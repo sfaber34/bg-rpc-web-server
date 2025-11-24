@@ -813,8 +813,8 @@ router.get("/dashboard", async (req, res) => {
                 });
 
                 const newRange = days === 'all' ? 
-                  [new Date(data.requestHistory[0].hourMs).toISOString(), nowISO] : 
-                  [startDateISO, nowISO];
+                  [new Date(data.requestHistory[0].hourMs).toISOString(), now.toISOString()] : 
+                  [startDate.toISOString(), now.toISOString()];
 
                 ['requestHistoryPlot', 'warningHistoryPlot', 'errorHistoryPlot'].forEach(plotId => {
                   const plot = document.getElementById(plotId);
@@ -940,9 +940,9 @@ router.get("/dashboard", async (req, res) => {
               };
 
               // Set initial time range to all data
-              const now = new Date().toISOString();
-              const initialStartDate = new Date(data.requestHistory[0].hourMs).toISOString();
-              successLayout.xaxis.range = [initialStartDate, now];
+              const now = new Date();
+              const initialStartDate = new Date(data.requestHistory[0].hourMs);
+              successLayout.xaxis.range = [initialStartDate.toISOString(), now.toISOString()];
 
               Plotly.newPlot('requestHistoryPlot', traces, successLayout).then(gd => {
                 // Create warning request history line plot with matching x-axis range
@@ -995,7 +995,7 @@ router.get("/dashboard", async (req, res) => {
                   ...sharedLayoutConfig,
                   xaxis: {
                     ...sharedLayoutConfig.xaxis,
-                    range: [initialStartDate, now],  // Use the same initial range
+                    range: [initialStartDate.toISOString(), now.toISOString()],  // Use the same initial range
                     showticklabels: false,
                     ticks: '',
                     title: '',
@@ -1060,7 +1060,7 @@ router.get("/dashboard", async (req, res) => {
                     ...sharedLayoutConfig,
                     xaxis: {
                       ...sharedLayoutConfig.xaxis,
-                      range: [initialStartDate, now]  // Use the same initial range
+                      range: [initialStartDate.toISOString(), now.toISOString()]  // Use the same initial range
                     },
                     yaxis: {
                       title: 'Number of Errors / Hour',
