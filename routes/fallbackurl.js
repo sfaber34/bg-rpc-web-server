@@ -1,8 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { fallbackUrl } = require('../config');
+
+// Load FALLBACK_URL from bg-rpc-proxy .env
+require('dotenv').config({ path: '/home/ubuntu/bg-rpc-proxy/.env' });
 
 router.get("/fallbackurl", (req, res) => {
+  const fallbackUrl = process.env.FALLBACK_URL;
+  
   res.send(
     "<style>" +
       "body { font-family: Arial, sans-serif; margin: 0px; }" +
