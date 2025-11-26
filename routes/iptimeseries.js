@@ -93,7 +93,7 @@ async function getIpTimeseriesData(days = 7) {
 
 router.get("/iptimeseries", async (req, res) => {
   try {
-    const days = parseInt(req.query.days) || 7;
+    const days = parseInt(req.query.days) || 1;
     const data = await getIpTimeseriesData(days);
 
     if (data.length === 0) {
@@ -144,18 +144,31 @@ router.get("/iptimeseries", async (req, res) => {
           <title>IP Timeseries</title>
           <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
           <style>
-            body { 
+            html, body { 
               font-family: Arial, sans-serif;
               margin: 0;
-              padding: 0px;
+              padding: 0;
+              height: 100%;
+              overflow: hidden;
+            }
+            body {
+              display: flex;
+              flex-direction: column;
+            }
+            .header-container {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 10px;
+              flex-shrink: 0;
             }
             h1 {
               color: #333;
-              margin-bottom: 10px;
-              margin-left: 10px;
+              margin: 0;
             }
             .controls {
-              margin-bottom: 20px;
+              display: flex;
+              gap: 5px;
             }
             .time-filter-btn {
               padding: 8px 16px;
@@ -177,26 +190,21 @@ router.get("/iptimeseries", async (req, res) => {
             }
             #ipTimeseriesPlot {
               width: 100%;
-              height: calc(100vh - 200px);
-              min-height: 500px;
-            }
-            .stats {
-              margin-left: 10px;
-              color: #666;
-              font-size: 14px;
-              margin-bottom: 10px;
+              flex: 1;
+              min-height: 0;
             }
           </style>
         </head>
         <body>
-          <h1>IP Request Timeseries - Top 20 IPs</h1>
-          <div class="stats">Showing top 20 IPs by request count over the last ${days} day(s)</div>
-          <div class="controls">
-            <button class="time-filter-btn" data-days="1">1 Day</button>
-            <button class="time-filter-btn" data-days="3">3 Days</button>
-            <button class="time-filter-btn active" data-days="7">1 Week</button>
-            <button class="time-filter-btn" data-days="14">2 Weeks</button>
-            <button class="time-filter-btn" data-days="30">1 Month</button>
+          <div class="header-container">
+            <h1>IP Request Timeseries - Top 20 IPs</h1>
+            <div class="controls">
+              <button class="time-filter-btn active" data-days="1">1 Day</button>
+              <button class="time-filter-btn" data-days="3">3 Days</button>
+              <button class="time-filter-btn" data-days="7">1 Week</button>
+              <button class="time-filter-btn" data-days="14">2 Weeks</button>
+              <button class="time-filter-btn" data-days="30">1 Month</button>
+            </div>
           </div>
           <div id="ipTimeseriesPlot"></div>
 
@@ -220,7 +228,7 @@ router.get("/iptimeseries", async (req, res) => {
               mode: 'lines+markers',
               line: {
                 color: colors[index % colors.length],
-                width: 2
+                width: 3
               },
               marker: {
                 size: 4
@@ -228,10 +236,6 @@ router.get("/iptimeseries", async (req, res) => {
             }));
 
             const layout = {
-              title: {
-                text: 'Request Count Over Time by IP',
-                font: { size: 18 }
-              },
               xaxis: {
                 title: 'Time (UTC)',
                 type: 'date',
