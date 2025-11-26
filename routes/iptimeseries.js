@@ -252,6 +252,9 @@ router.get("/iptimeseries", async (req, res) => {
                 markerSymbol = 'diamond'; // Bottom 10
               }
               
+              // Create array of marker sizes: 0 for zero requests, 12 for non-zero
+              const markerSizes = data.counts.map(count => count > 0 ? 12 : 0);
+              
               return {
                 name: ip,
                 x: data.timestamps,
@@ -263,7 +266,7 @@ router.get("/iptimeseries", async (req, res) => {
                   width: 3
                 },
                 marker: {
-                  size: 12,
+                  size: markerSizes,
                   symbol: markerSymbol
                 },
                 hovertemplate: '<b>' + ip + '</b><br>Requests: %{y}<extra></extra>'
@@ -307,7 +310,12 @@ router.get("/iptimeseries", async (req, res) => {
               const update = {
                 'line.width': traces.map((trace, idx) => idx === curveNumber ? 6 : 3),
                 'opacity': traces.map((trace, idx) => idx === curveNumber ? 1.0 : 0.3),
-                'marker.size': traces.map((trace, idx) => idx === curveNumber ? 18 : 12)
+                'marker.size': traces.map((trace, idx) => {
+                  return trace.y.map(count => {
+                    if (count === 0) return 0;
+                    return idx === curveNumber ? 18 : 12;
+                  });
+                })
               };
               Plotly.restyle('ipTimeseriesPlot', update);
             });
@@ -316,7 +324,7 @@ router.get("/iptimeseries", async (req, res) => {
               const update = {
                 'line.width': traces.map(() => 3),
                 'opacity': traces.map(() => 1.0),
-                'marker.size': traces.map(() => 12)
+                'marker.size': traces.map(trace => trace.y.map(count => count > 0 ? 12 : 0))
               };
               Plotly.restyle('ipTimeseriesPlot', update);
             });
@@ -359,7 +367,12 @@ router.get("/iptimeseries", async (req, res) => {
                   const update = {
                     'line.width': traces.map((trace, idx) => idx === index ? 6 : 3),
                     'opacity': traces.map((trace, idx) => idx === index ? 1.0 : 0.3),
-                    'marker.size': traces.map((trace, idx) => idx === index ? 18 : 12)
+                    'marker.size': traces.map((trace, idx) => {
+                      return trace.y.map(count => {
+                        if (count === 0) return 0;
+                        return idx === index ? 18 : 12;
+                      });
+                    })
                   };
                   Plotly.restyle('ipTimeseriesPlot', update);
                 });
@@ -368,7 +381,7 @@ router.get("/iptimeseries", async (req, res) => {
                   const update = {
                     'line.width': traces.map(() => 3),
                     'opacity': traces.map(() => 1.0),
-                    'marker.size': traces.map(() => 12)
+                    'marker.size': traces.map(trace => trace.y.map(count => count > 0 ? 12 : 0))
                   };
                   Plotly.restyle('ipTimeseriesPlot', update);
                 });
