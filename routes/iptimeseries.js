@@ -121,18 +121,37 @@ router.get("/iptimeseries", async (req, res) => {
       `);
     }
 
-    // Group data by IP to create traces
-    const ipData = {};
+    // First, collect all unique timestamps and organize data by IP
+    const allTimestamps = new Set();
+    const ipDataMap = {};
+    
     data.forEach(row => {
-      if (!ipData[row.ip]) {
-        ipData[row.ip] = {
-          timestamps: [],
-          counts: []
-        };
+      const timestamp = row.hour_timestamp;
+      allTimestamps.add(timestamp);
+      
+      if (!ipDataMap[row.ip]) {
+        ipDataMap[row.ip] = {};
       }
-      // Convert epoch timestamp (seconds) to milliseconds for JavaScript Date
-      ipData[row.ip].timestamps.push(new Date(row.hour_timestamp * 1000).toISOString());
-      ipData[row.ip].counts.push(row.request_count);
+      ipDataMap[row.ip][timestamp] = row.request_count;
+    });
+    
+    // Sort timestamps
+    const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
+    
+    // Fill in missing timestamps with 0 for each IP
+    const ipData = {};
+    Object.keys(ipDataMap).forEach(ip => {
+      ipData[ip] = {
+        timestamps: [],
+        counts: []
+      };
+      
+      sortedTimestamps.forEach(timestamp => {
+        // Convert epoch timestamp (seconds) to milliseconds for JavaScript Date
+        ipData[ip].timestamps.push(new Date(timestamp * 1000).toISOString());
+        // If this IP has data for this timestamp, use it; otherwise use 0
+        ipData[ip].counts.push(ipDataMap[ip][timestamp] || 0);
+      });
     });
 
     // Escape the data for safe injection into script tag
@@ -271,17 +290,71 @@ router.get("/iptimeseries", async (req, res) => {
             plotElement.on('plotly_hover', function(data) {
               const curveNumber = data.points[0].curveNumber;
               const update = {
-                'line.width': traces.map((trace, idx) => idx === curveNumber ? 6 : 3)
+                'line.width': traces.map((trace, idx) => idx === curveNumber ? 6 : 3),
+                'opacity': traces.map((trace, idx) => idx === curveNumber ? 1.0 : 0.3)
               };
               Plotly.restyle('ipTimeseriesPlot', update);
             });
 
             plotElement.on('plotly_unhover', function(data) {
               const update = {
-                'line.width': traces.map(() => 3)
+                'line.width': traces.map(() => 3),
+                'opacity': traces.map(() => 1.0)
               };
               Plotly.restyle('ipTimeseriesPlot', update);
             });
+
+            // Add hover effect to legend items
+            setTimeout(() => {
+              // Try multiple selectors to find legend items
+              let legendItems = null;
+              const selectors = [
+                '#ipTimeseriesPlot .legend .traces .trace',
+                '#ipTimeseriesPlot g.traces > g.trace',
+                '#ipTimeseriesPlot .legend text.legendtext'
+              ];
+              
+              for (const selector of selectors) {
+                const elements = document.querySelectorAll(selector);
+                if (elements.length > 0) {
+                  console.log('Found legend items with selector:', selector, 'Count:', elements.length);
+                  legendItems = elements;
+                  break;
+                }
+              }
+              
+              if (!legendItems) {
+                console.log('Could not find legend items. Available classes:', 
+                  Array.from(document.querySelectorAll('#ipTimeseriesPlot *'))
+                    .filter(el => el.classList.length > 0)
+                    .map(el => el.className)
+                    .slice(0, 20)
+                );
+                return;
+              }
+              
+              legendItems.forEach((item, index) => {
+                // Find the parent group element if we selected text elements
+                const targetElement = item.tagName === 'text' ? item.closest('g.trace') || item.parentElement : item;
+                targetElement.style.cursor = 'pointer';
+                
+                targetElement.addEventListener('mouseenter', () => {
+                  const update = {
+                    'line.width': traces.map((trace, idx) => idx === index ? 6 : 3),
+                    'opacity': traces.map((trace, idx) => idx === index ? 1.0 : 0.3)
+                  };
+                  Plotly.restyle('ipTimeseriesPlot', update);
+                });
+                
+                targetElement.addEventListener('mouseleave', () => {
+                  const update = {
+                    'line.width': traces.map(() => 3),
+                    'opacity': traces.map(() => 1.0)
+                  };
+                  Plotly.restyle('ipTimeseriesPlot', update);
+                });
+              });
+            }, 200);
 
             // Add time filter button handlers
             document.querySelectorAll('.time-filter-btn').forEach(btn => {
