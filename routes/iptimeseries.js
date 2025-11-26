@@ -232,7 +232,8 @@ router.get("/iptimeseries", async (req, res) => {
               },
               marker: {
                 size: 4
-              }
+              },
+              hovertemplate: '<b>' + ip + '</b><br>Requests: %{y}<extra></extra>'
             }));
 
             const layout = {
@@ -263,6 +264,24 @@ router.get("/iptimeseries", async (req, res) => {
             };
 
             Plotly.newPlot('ipTimeseriesPlot', traces, layout);
+
+            // Add hover effect to highlight traces
+            const plotElement = document.getElementById('ipTimeseriesPlot');
+            
+            plotElement.on('plotly_hover', function(data) {
+              const curveNumber = data.points[0].curveNumber;
+              const update = {
+                'line.width': traces.map((trace, idx) => idx === curveNumber ? 6 : 3)
+              };
+              Plotly.restyle('ipTimeseriesPlot', update);
+            });
+
+            plotElement.on('plotly_unhover', function(data) {
+              const update = {
+                'line.width': traces.map(() => 3)
+              };
+              Plotly.restyle('ipTimeseriesPlot', update);
+            });
 
             // Add time filter button handlers
             document.querySelectorAll('.time-filter-btn').forEach(btn => {
