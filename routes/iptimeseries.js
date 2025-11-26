@@ -263,7 +263,7 @@ router.get("/iptimeseries", async (req, res) => {
                   width: 3
                 },
                 marker: {
-                  size: 8,
+                  size: 12,
                   symbol: markerSymbol
                 },
                 hovertemplate: '<b>' + ip + '</b><br>Requests: %{y}<extra></extra>'
@@ -307,7 +307,7 @@ router.get("/iptimeseries", async (req, res) => {
               const update = {
                 'line.width': traces.map((trace, idx) => idx === curveNumber ? 6 : 3),
                 'opacity': traces.map((trace, idx) => idx === curveNumber ? 1.0 : 0.3),
-                'marker.size': traces.map((trace, idx) => idx === curveNumber ? 12 : 8)
+                'marker.size': traces.map((trace, idx) => idx === curveNumber ? 18 : 12)
               };
               Plotly.restyle('ipTimeseriesPlot', update);
             });
@@ -316,7 +316,7 @@ router.get("/iptimeseries", async (req, res) => {
               const update = {
                 'line.width': traces.map(() => 3),
                 'opacity': traces.map(() => 1.0),
-                'marker.size': traces.map(() => 8)
+                'marker.size': traces.map(() => 12)
               };
               Plotly.restyle('ipTimeseriesPlot', update);
             });
@@ -359,7 +359,7 @@ router.get("/iptimeseries", async (req, res) => {
                   const update = {
                     'line.width': traces.map((trace, idx) => idx === index ? 6 : 3),
                     'opacity': traces.map((trace, idx) => idx === index ? 1.0 : 0.3),
-                    'marker.size': traces.map((trace, idx) => idx === index ? 12 : 8)
+                    'marker.size': traces.map((trace, idx) => idx === index ? 18 : 12)
                   };
                   Plotly.restyle('ipTimeseriesPlot', update);
                 });
@@ -368,7 +368,7 @@ router.get("/iptimeseries", async (req, res) => {
                   const update = {
                     'line.width': traces.map(() => 3),
                     'opacity': traces.map(() => 1.0),
-                    'marker.size': traces.map(() => 8)
+                    'marker.size': traces.map(() => 12)
                   };
                   Plotly.restyle('ipTimeseriesPlot', update);
                 });
