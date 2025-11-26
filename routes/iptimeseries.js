@@ -54,14 +54,14 @@ async function getIpTimeseriesData(days = 7) {
   try {
     pool = await getDbConnection();
     
-    // Step 1: Get top 20 IPs by total request count
+    // Step 1: Get top 30 IPs by total request count
     const topIpsResult = await pool.query(
       `SELECT ip, SUM(request_count) as total_requests
        FROM ip_history_table
        WHERE hour_timestamp >= EXTRACT(EPOCH FROM NOW() - INTERVAL '${days} days')
        GROUP BY ip
        ORDER BY total_requests DESC
-       LIMIT 20`
+       LIMIT 30`
     );
     
     const topIps = topIpsResult.rows.map(row => row.ip);
@@ -70,7 +70,7 @@ async function getIpTimeseriesData(days = 7) {
       return [];
     }
     
-    // Step 2: Get timeseries data for those top 20 IPs
+    // Step 2: Get timeseries data for those top 30 IPs
     const timeseriesResult = await pool.query(
       `SELECT hour_timestamp, ip, request_count
        FROM ip_history_table
@@ -114,7 +114,7 @@ router.get("/iptimeseries", async (req, res) => {
             </style>
           </head>
           <body>
-            <h1>IP Request Timeseries - Top 20 IPs</h1>
+            <h1>IP Request Timeseries - Top 30 IPs</h1>
             <p class="message">No data found in the database for the selected time range.</p>
           </body>
         </html>
@@ -216,7 +216,7 @@ router.get("/iptimeseries", async (req, res) => {
         </head>
         <body>
           <div class="header-container">
-            <h1>IP Request Timeseries - Top 20 IPs</h1>
+            <h1>IP Request Timeseries - Top 30 IPs</h1>
             <div class="controls">
               <button class="time-filter-btn active" data-days="1">1 Day</button>
               <button class="time-filter-btn" data-days="3">3 Days</button>
@@ -235,25 +235,40 @@ router.get("/iptimeseries", async (req, res) => {
               '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
               '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
               '#aec7e8', '#ffbb78', '#98df8a', '#ff9896', '#c5b0d5',
-              '#c49c94', '#f7b6d2', '#c7c7c7', '#dbdb8d', '#9edae5'
+              '#c49c94', '#f7b6d2', '#c7c7c7', '#dbdb8d', '#9edae5',
+              '#e377c2', '#7f7f7f', '#bcbd22', '#17becf', '#1f77b4',
+              '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b'
             ];
 
             // Create traces for each IP
-            const traces = Object.entries(ipData).map(([ip, data], index) => ({
-              name: ip,
-              x: data.timestamps,
-              y: data.counts,
-              type: 'scatter',
-              mode: 'lines+markers',
-              line: {
-                color: colors[index % colors.length],
-                width: 3
-              },
-              marker: {
-                size: 4
-              },
-              hovertemplate: '<b>' + ip + '</b><br>Requests: %{y}<extra></extra>'
-            }));
+            const traces = Object.entries(ipData).map(([ip, data], index) => {
+              // Determine marker symbol based on ranking
+              let markerSymbol;
+              if (index < 10) {
+                markerSymbol = 'circle';  // Top 10
+              } else if (index < 20) {
+                markerSymbol = 'square';  // Middle 10
+              } else {
+                markerSymbol = 'diamond'; // Bottom 10
+              }
+              
+              return {
+                name: ip,
+                x: data.timestamps,
+                y: data.counts,
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: {
+                  color: colors[index % colors.length],
+                  width: 3
+                },
+                marker: {
+                  size: 8,
+                  symbol: markerSymbol
+                },
+                hovertemplate: '<b>' + ip + '</b><br>Requests: %{y}<extra></extra>'
+              };
+            });
 
             const layout = {
               xaxis: {
@@ -291,7 +306,8 @@ router.get("/iptimeseries", async (req, res) => {
               const curveNumber = data.points[0].curveNumber;
               const update = {
                 'line.width': traces.map((trace, idx) => idx === curveNumber ? 6 : 3),
-                'opacity': traces.map((trace, idx) => idx === curveNumber ? 1.0 : 0.3)
+                'opacity': traces.map((trace, idx) => idx === curveNumber ? 1.0 : 0.3),
+                'marker.size': traces.map((trace, idx) => idx === curveNumber ? 12 : 8)
               };
               Plotly.restyle('ipTimeseriesPlot', update);
             });
@@ -299,7 +315,8 @@ router.get("/iptimeseries", async (req, res) => {
             plotElement.on('plotly_unhover', function(data) {
               const update = {
                 'line.width': traces.map(() => 3),
-                'opacity': traces.map(() => 1.0)
+                'opacity': traces.map(() => 1.0),
+                'marker.size': traces.map(() => 8)
               };
               Plotly.restyle('ipTimeseriesPlot', update);
             });
@@ -341,7 +358,8 @@ router.get("/iptimeseries", async (req, res) => {
                 targetElement.addEventListener('mouseenter', () => {
                   const update = {
                     'line.width': traces.map((trace, idx) => idx === index ? 6 : 3),
-                    'opacity': traces.map((trace, idx) => idx === index ? 1.0 : 0.3)
+                    'opacity': traces.map((trace, idx) => idx === index ? 1.0 : 0.3),
+                    'marker.size': traces.map((trace, idx) => idx === index ? 12 : 8)
                   };
                   Plotly.restyle('ipTimeseriesPlot', update);
                 });
@@ -349,7 +367,8 @@ router.get("/iptimeseries", async (req, res) => {
                 targetElement.addEventListener('mouseleave', () => {
                   const update = {
                     'line.width': traces.map(() => 3),
-                    'opacity': traces.map(() => 1.0)
+                    'opacity': traces.map(() => 1.0),
+                    'marker.size': traces.map(() => 8)
                   };
                   Plotly.restyle('ipTimeseriesPlot', update);
                 });
