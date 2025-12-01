@@ -53,7 +53,7 @@ async function getIpTableData() {
   let pool;
   try {
     pool = await getDbConnection();
-    const result = await pool.query('SELECT ip, origins, requests_last_hour, requests_total, last_reset_timestamp, updated_at FROM ip_table ORDER BY requests_total DESC');
+    const result = await pool.query('SELECT ip, origins, requests_last_hour, requests_this_month, requests_total, last_reset_timestamp, updated_at FROM ip_table ORDER BY requests_total DESC');
     return result.rows;
   } catch (error) {
     console.error('Error getting IP table data:', error);
@@ -102,6 +102,7 @@ router.get("/iptable", async (req, res) => {
       const ip = rowData.ip || '';
       const origins = typeof rowData.origins === 'object' ? JSON.stringify(rowData.origins) : (rowData.origins || '');
       const requestsLastHour = rowData.requests_last_hour || 0;
+      const requestsThisMonth = rowData.requests_this_month || 0;
       const requestsTotal = rowData.requests_total || 0;
       
       // Format timestamps - handle epoch timestamps (numbers/strings), Date objects, and string formats
@@ -141,6 +142,7 @@ router.get("/iptable", async (req, res) => {
           <td>${ip}</td>
           <td>${origins}</td>
           <td>${requestsLastHour}</td>
+          <td>${requestsThisMonth}</td>
           <td>${requestsTotal}</td>
           <td>${lastResetTimestamp}</td>
           <td>${updatedAt}</td>
@@ -156,8 +158,9 @@ router.get("/iptable", async (req, res) => {
       <th data-sort="string">IP</th>
       <th data-sort="string">Origins</th>
       <th data-sort="number">Requests Last Hour</th>
+      <th data-sort="number">Requests This Month</th>
       <th data-sort="number">Requests Total</th>
-      <th data-sort="string">Last Reset</th>
+      <th data-sort="string">Last Hourly Reset</th>
       <th data-sort="string">Updated At</th>
     `;
 
