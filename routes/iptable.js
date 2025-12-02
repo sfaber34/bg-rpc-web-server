@@ -407,7 +407,6 @@ router.get("/iptable", async (req, res) => {
               function displayIpInfo(data) {
                 const fields = [
                   { key: 'query', label: 'IP Address' },
-                  { key: 'status', label: 'Status' },
                   { key: 'country', label: 'Country' },
                   { key: 'countryCode', label: 'Country Code' },
                   { key: 'region', label: 'Region' },
