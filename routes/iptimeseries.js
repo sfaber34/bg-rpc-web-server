@@ -4,6 +4,7 @@ const { Pool } = require('pg');
 const { SecretsManagerClient, GetSecretValueCommand } = require("@aws-sdk/client-secrets-manager");
 const path = require('path');
 const fs = require('fs');
+const { lookupIp } = require('../utils/ipLookup');
 
 // Load .env from the project root directory
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
@@ -90,6 +91,18 @@ async function getIpTimeseriesData(days = 7) {
     }
   }
 }
+
+// API endpoint for IP lookup
+router.get("/iptimeseries/lookup/:ip", async (req, res) => {
+  try {
+    const ip = req.params.ip;
+    const ipInfo = await lookupIp(ip);
+    res.json(ipInfo);
+  } catch (error) {
+    console.error('Error in IP lookup endpoint:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 router.get("/iptimeseries", async (req, res) => {
   try {
@@ -212,6 +225,71 @@ router.get("/iptimeseries", async (req, res) => {
               flex: 1;
               min-height: 0;
             }
+            .modal {
+              display: none;
+              position: fixed;
+              z-index: 1000;
+              left: 0;
+              top: 0;
+              width: 100%;
+              height: 100%;
+              overflow: auto;
+              background-color: rgba(0,0,0,0.5);
+            }
+            .modal-content {
+              background-color: #fefefe;
+              margin: 5% auto;
+              padding: 20px;
+              border: 1px solid #888;
+              border-radius: 8px;
+              width: 80%;
+              max-width: 600px;
+              box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            }
+            .modal-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 20px;
+              border-bottom: 2px solid #f0f0f0;
+              padding-bottom: 10px;
+            }
+            .modal-header h2 {
+              margin: 0;
+              color: #333;
+            }
+            .close {
+              color: #aaa;
+              font-size: 28px;
+              font-weight: bold;
+              cursor: pointer;
+              line-height: 20px;
+            }
+            .close:hover,
+            .close:focus {
+              color: #000;
+            }
+            .modal-body {
+              color: #333;
+            }
+            .ip-info-table {
+              width: 100%;
+              border-collapse: collapse;
+            }
+            .ip-info-table td {
+              padding: 10px;
+              border-bottom: 1px solid #f0f0f0;
+            }
+            .ip-info-table td:first-child {
+              font-weight: bold;
+              width: 40%;
+              color: #666;
+            }
+            .loading {
+              text-align: center;
+              padding: 20px;
+              color: #666;
+            }
           </style>
         </head>
         <body>
@@ -225,6 +303,20 @@ router.get("/iptimeseries", async (req, res) => {
               <button class="time-filter-btn" data-days="30">1 Month</button>
             </div>
           </div>
+          
+          <!-- IP Info Modal -->
+          <div id="ipModal" class="modal">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h2>IP Information</h2>
+                <span class="close">&times;</span>
+              </div>
+              <div class="modal-body" id="modalBody">
+                <div class="loading">Loading...</div>
+              </div>
+            </div>
+          </div>
+          
           <div id="ipTimeseriesPlot"></div>
 
           <script>
@@ -290,7 +382,9 @@ router.get("/iptimeseries", async (req, res) => {
                 x: 1.02,
                 y: 1,
                 xanchor: 'left',
-                yanchor: 'top'
+                yanchor: 'top',
+                itemclick: false,  // Disable default click behavior
+                itemdoubleclick: false  // Disable default double-click behavior
               },
               margin: {
                 l: 60,
@@ -301,6 +395,79 @@ router.get("/iptimeseries", async (req, res) => {
             };
 
             Plotly.newPlot('ipTimeseriesPlot', traces, layout);
+
+            // Modal functionality
+            const modal = document.getElementById('ipModal');
+            const modalBody = document.getElementById('modalBody');
+            const closeBtn = document.querySelector('.close');
+
+            async function fetchIpInfo(ip) {
+              try {
+                modalBody.innerHTML = '<div class="loading">Loading...</div>';
+                modal.style.display = 'block';
+                
+                const response = await fetch(\`/iptimeseries/lookup/\${ip}\`);
+                if (!response.ok) {
+                  throw new Error('Failed to fetch IP information');
+                }
+                
+                const data = await response.json();
+                displayIpInfo(data);
+              } catch (error) {
+                modalBody.innerHTML = \`<div class="loading" style="color: red;">Error: \${error.message}</div>\`;
+              }
+            }
+
+            function displayIpInfo(data) {
+              const fields = [
+                { key: 'query', label: 'IP Address' },
+                { key: 'status', label: 'Status' },
+                { key: 'country', label: 'Country' },
+                { key: 'countryCode', label: 'Country Code' },
+                { key: 'region', label: 'Region' },
+                { key: 'regionName', label: 'Region Name' },
+                { key: 'city', label: 'City' },
+                { key: 'zip', label: 'Zip Code' },
+                { key: 'lat', label: 'Latitude' },
+                { key: 'lon', label: 'Longitude' },
+                { key: 'timezone', label: 'Timezone' },
+                { key: 'isp', label: 'ISP' },
+                { key: 'org', label: 'Organization' },
+                { key: 'as', label: 'AS Number' },
+                { key: 'mobile', label: 'Mobile' },
+                { key: 'proxy', label: 'Proxy' },
+                { key: 'hosting', label: 'Hosting' }
+              ];
+
+              let html = '<table class="ip-info-table">';
+              fields.forEach(field => {
+                const value = data[field.key];
+                if (value !== undefined && value !== null && value !== '') {
+                  const displayValue = typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value;
+                  html += \`<tr><td>\${field.label}</td><td>\${displayValue}</td></tr>\`;
+                }
+              });
+              html += '</table>';
+              modalBody.innerHTML = html;
+            }
+
+            // Close modal handlers
+            closeBtn.onclick = function() {
+              modal.style.display = 'none';
+            };
+
+            window.onclick = function(event) {
+              if (event.target === modal) {
+                modal.style.display = 'none';
+              }
+            };
+
+            // ESC key to close modal
+            document.addEventListener('keydown', function(event) {
+              if (event.key === 'Escape' && modal.style.display === 'block') {
+                modal.style.display = 'none';
+              }
+            });
 
             // Add hover effect to highlight traces
             const plotElement = document.getElementById('ipTimeseriesPlot');
@@ -362,6 +529,14 @@ router.get("/iptimeseries", async (req, res) => {
                 // Find the parent group element if we selected text elements
                 const targetElement = item.tagName === 'text' ? item.closest('g.trace') || item.parentElement : item;
                 targetElement.style.cursor = 'pointer';
+                
+                // Add click handler for IP lookup
+                targetElement.addEventListener('click', (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const ip = traces[index].name;
+                  fetchIpInfo(ip);
+                });
                 
                 targetElement.addEventListener('mouseenter', () => {
                   const update = {
