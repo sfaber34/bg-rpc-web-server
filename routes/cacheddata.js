@@ -172,11 +172,11 @@ router.get("/cacheddata", async (req, res) => {
           <table id="cacheTable">
             <thead>
               <tr>
-                <th data-sort="string" class="sort-asc">Key</th>
+                <th data-sort="string">Key</th>
                 <th data-sort="string">Params</th>
                 <th data-sort="string">Value</th>
                 <th data-sort="number">Timestamp</th>
-                <th data-sort="number">Age</th>
+                <th data-sort="age" class="sort-desc">Age</th>
               </tr>
             </thead>
             <tbody>
@@ -210,8 +210,8 @@ router.get("/cacheddata", async (req, res) => {
               const headers = table.querySelectorAll('th');
               const tbody = table.querySelector('tbody');
 
-              // Sort by Key (asc) by default
-              sortTable(0, 'asc');
+              // Sort by Age (desc) by default (oldest first)
+              sortTable(4, 'asc');
 
               headers.forEach((header, index) => {
                 header.addEventListener('click', () => {
@@ -237,6 +237,19 @@ router.get("/cacheddata", async (req, res) => {
                     // Handle null values by converting them to 0
                     aValue = aValue === 'null' ? 0 : new Date(aValue).getTime();
                     bValue = bValue === 'null' ? 0 : new Date(bValue).getTime();
+                  } else if (sortType === 'age') {
+                    // For age column, convert HH:MM:SS to total seconds for proper sorting
+                    // Handle null values by converting them to 0
+                    const parseAge = (ageStr) => {
+                      if (ageStr === 'null') return 0;
+                      const parts = ageStr.split(':');
+                      const hours = parseInt(parts[0], 10);
+                      const minutes = parseInt(parts[1], 10);
+                      const seconds = parseInt(parts[2], 10);
+                      return hours * 3600 + minutes * 60 + seconds;
+                    };
+                    aValue = parseAge(aValue);
+                    bValue = parseAge(bValue);
                   }
 
                   if (direction === 'asc') {
