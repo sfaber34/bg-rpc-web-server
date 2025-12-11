@@ -365,11 +365,24 @@ router.get("/iptimeseries", async (req, res) => {
               };
             });
 
+            // Calculate x-axis range to eliminate blank spaces
+            let minTime = null;
+            let maxTime = null;
+            traces.forEach(trace => {
+              if (trace.x.length > 0) {
+                const firstTime = trace.x[0];
+                const lastTime = trace.x[trace.x.length - 1];
+                if (minTime === null || firstTime < minTime) minTime = firstTime;
+                if (maxTime === null || lastTime > maxTime) maxTime = lastTime;
+              }
+            });
+
             const layout = {
               xaxis: {
                 title: 'Time (UTC)',
                 type: 'date',
-                showgrid: true
+                showgrid: true,
+                range: [minTime, maxTime]  // Set exact range to eliminate blank spaces
               },
               yaxis: {
                 title: 'Request Count',

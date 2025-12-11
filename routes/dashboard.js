@@ -799,7 +799,8 @@ router.get("/dashboard", async (req, res) => {
             if (data.requestHistory) {
               // Function to update time range for all plots
               function updateTimeRange(days) {
-                const now = new Date();
+                const lastDataDate = new Date(data.requestHistory[data.requestHistory.length - 1].hourMs);
+                const now = lastDataDate; // Use actual last data point instead of current time
                 const nowISO = now.toISOString();
                 let startDate = days === 'all' ? null : new Date(now - (days * 24 * 60 * 60 * 1000));
                 let startDateISO = startDate ? startDate.toISOString() : new Date(data.requestHistory[0].hourMs).toISOString();
@@ -939,10 +940,11 @@ router.get("/dashboard", async (req, res) => {
                 margin: { t: 0, b: 20, l: 50, r: 25 }
               };
 
-              // Set initial time range to all data
-              const now = new Date();
+              // Set initial time range to all data - calculate actual data bounds
               const initialStartDate = new Date(data.requestHistory[0].hourMs);
-              successLayout.xaxis.range = [initialStartDate.toISOString(), now.toISOString()];
+              const lastDataDate = new Date(data.requestHistory[data.requestHistory.length - 1].hourMs);
+              const now = new Date();
+              successLayout.xaxis.range = [initialStartDate.toISOString(), lastDataDate.toISOString()];
 
               Plotly.newPlot('requestHistoryPlot', traces, successLayout).then(gd => {
                 // Create warning request history line plot with matching x-axis range
@@ -995,7 +997,7 @@ router.get("/dashboard", async (req, res) => {
                   ...sharedLayoutConfig,
                   xaxis: {
                     ...sharedLayoutConfig.xaxis,
-                    range: [initialStartDate.toISOString(), now.toISOString()],  // Use the same initial range
+                    range: [initialStartDate.toISOString(), lastDataDate.toISOString()],  // Use the same initial range
                     showticklabels: false,
                     ticks: '',
                     title: '',
@@ -1060,7 +1062,7 @@ router.get("/dashboard", async (req, res) => {
                     ...sharedLayoutConfig,
                     xaxis: {
                       ...sharedLayoutConfig.xaxis,
-                      range: [initialStartDate.toISOString(), now.toISOString()]  // Use the same initial range
+                      range: [initialStartDate.toISOString(), lastDataDate.toISOString()]  // Use the same initial range
                     },
                     yaxis: {
                       title: 'Number of Errors / Hour',
