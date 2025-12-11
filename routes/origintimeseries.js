@@ -385,6 +385,15 @@ router.get("/origintimeseries", async (req, res) => {
               }
             });
 
+            // Calculate y-axis max value with padding
+            let maxY = 0;
+            traces.forEach(trace => {
+              const traceMax = Math.max(...trace.y);
+              if (traceMax > maxY) maxY = traceMax;
+            });
+            // Add 2% padding to the top
+            maxY = maxY * 1.02;
+
             const layout = {
               xaxis: {
                 title: 'Time (UTC)',
@@ -394,7 +403,8 @@ router.get("/origintimeseries", async (req, res) => {
               },
               yaxis: {
                 title: 'Request Count',
-                showgrid: true
+                showgrid: true,
+                range: [0, maxY]  // Start at 0 and extend to max with padding
               },
               hovermode: 'closest',
               showlegend: true,
