@@ -73,7 +73,7 @@ async function getIpTimeseriesData(days = 7) {
     
     // Step 2: Get timeseries data for those top 30 IPs
     const timeseriesResult = await pool.query(
-      `SELECT hour_timestamp, ip, request_count
+      `SELECT hour_timestamp, ip, request_count, origins
        FROM ip_history_table
        WHERE hour_timestamp >= EXTRACT(EPOCH FROM NOW() - INTERVAL '${days} days')
          AND ip = ANY($1)
@@ -145,7 +145,21 @@ router.get("/iptimeseries", async (req, res) => {
       if (!ipDataMap[row.ip]) {
         ipDataMap[row.ip] = {};
       }
-      ipDataMap[row.ip][timestamp] = row.request_count;
+      
+      // Calculate requests with origins (sum of all origin values)
+      let requestsWithOrigins = 0;
+      if (row.origins && typeof row.origins === 'object') {
+        requestsWithOrigins = Object.values(row.origins).reduce((sum, count) => sum + count, 0);
+      }
+      
+      // Calculate requests without origins
+      const requestsWithoutOrigins = row.request_count - requestsWithOrigins;
+      
+      ipDataMap[row.ip][timestamp] = {
+        total: row.request_count,
+        withOrigin: requestsWithOrigins,
+        withoutOrigin: requestsWithoutOrigins
+      };
     });
     
     // Sort timestamps
@@ -156,14 +170,26 @@ router.get("/iptimeseries", async (req, res) => {
     Object.keys(ipDataMap).forEach(ip => {
       ipData[ip] = {
         timestamps: [],
-        counts: []
+        countsTotal: [],
+        countsWithOrigin: [],
+        countsWithoutOrigin: []
       };
       
       sortedTimestamps.forEach(timestamp => {
         // Convert epoch timestamp (seconds) to milliseconds for JavaScript Date
         ipData[ip].timestamps.push(new Date(timestamp * 1000).toISOString());
+        
         // If this IP has data for this timestamp, use it; otherwise use 0
-        ipData[ip].counts.push(ipDataMap[ip][timestamp] || 0);
+        const dataPoint = ipDataMap[ip][timestamp];
+        if (dataPoint) {
+          ipData[ip].countsTotal.push(dataPoint.total);
+          ipData[ip].countsWithOrigin.push(dataPoint.withOrigin);
+          ipData[ip].countsWithoutOrigin.push(dataPoint.withoutOrigin);
+        } else {
+          ipData[ip].countsTotal.push(0);
+          ipData[ip].countsWithOrigin.push(0);
+          ipData[ip].countsWithoutOrigin.push(0);
+        }
       });
     });
 
@@ -191,8 +217,10 @@ router.get("/iptimeseries", async (req, res) => {
               display: flex;
               justify-content: space-between;
               align-items: center;
-              padding: 10px;
+              padding: 15px 20px;
               flex-shrink: 0;
+              background-color: #f8f9fa;
+              border-bottom: 1px solid #e0e0e0;
             }
             h1 {
               color: #333;
@@ -200,9 +228,10 @@ router.get("/iptimeseries", async (req, res) => {
             }
             .controls {
               display: flex;
-              gap: 5px;
+              gap: 20px;
+              align-items: center;
             }
-            .time-filter-btn {
+            .time-filter-btn, .origin-filter-btn {
               padding: 8px 16px;
               margin: 0 5px;
               border: 1px solid #ccc;
@@ -212,13 +241,31 @@ router.get("/iptimeseries", async (req, res) => {
               font-size: 14px;
               transition: all 0.2s;
             }
-            .time-filter-btn:hover {
+            .time-filter-btn:hover, .origin-filter-btn:hover {
               background-color: #f0f0f0;
             }
             .time-filter-btn.active {
               background-color: #1f77b4;
               color: white;
               border-color: #1f77b4;
+            }
+            .origin-filter-btn.active {
+              background-color: #2ca02c;
+              color: white;
+              border-color: #2ca02c;
+            }
+            .filter-group {
+              display: flex;
+              gap: 5px;
+              align-items: center;
+            }
+            .filter-group .filter-label {
+              margin-right: 5px;
+            }
+            .filter-label {
+              font-weight: bold;
+              color: #555;
+              font-size: 14px;
             }
             #ipTimeseriesPlot {
               width: 100%;
@@ -296,11 +343,20 @@ router.get("/iptimeseries", async (req, res) => {
           <div class="header-container">
             <h1>IP Request Timeseries - Top 30 IPs</h1>
             <div class="controls">
-              <button class="time-filter-btn active" data-days="1">1 Day</button>
-              <button class="time-filter-btn" data-days="3">3 Days</button>
-              <button class="time-filter-btn" data-days="7">1 Week</button>
-              <button class="time-filter-btn" data-days="14">2 Weeks</button>
-              <button class="time-filter-btn" data-days="30">1 Month</button>
+              <div class="filter-group">
+                <span class="filter-label">Origin:</span>
+                <button class="origin-filter-btn active" data-filter="all">All</button>
+                <button class="origin-filter-btn" data-filter="origin">Origin</button>
+                <button class="origin-filter-btn" data-filter="no-origin">No Origin</button>
+              </div>
+              <div class="filter-group">
+                <span class="filter-label">Time:</span>
+                <button class="time-filter-btn active" data-days="1">1 Day</button>
+                <button class="time-filter-btn" data-days="3">3 Days</button>
+                <button class="time-filter-btn" data-days="7">1 Week</button>
+                <button class="time-filter-btn" data-days="14">2 Weeks</button>
+                <button class="time-filter-btn" data-days="30">1 Month</button>
+              </div>
             </div>
           </div>
           
@@ -345,12 +401,13 @@ router.get("/iptimeseries", async (req, res) => {
               }
               
               // Create array of marker sizes: 0 for zero requests, 12 for non-zero
-              const markerSizes = data.counts.map(count => count > 0 ? 12 : 0);
+              // Start with total counts (default view is "All")
+              const markerSizes = data.countsTotal.map(count => count > 0 ? 12 : 0);
               
               return {
                 name: ip,
                 x: data.timestamps,
-                y: data.counts,
+                y: data.countsTotal,  // Default to showing total counts
                 type: 'scatter',
                 mode: 'lines+markers',
                 line: {
@@ -361,7 +418,12 @@ router.get("/iptimeseries", async (req, res) => {
                   size: markerSizes,
                   symbol: markerSymbol
                 },
-                hovertemplate: '<b>' + ip + '</b><br>Requests: %{y}<extra></extra>'
+                hovertemplate: '<b>' + ip + '</b><br>Requests: %{y}<extra></extra>',
+                // Store all count arrays for filtering
+                countsTotal: data.countsTotal,
+                countsWithOrigin: data.countsWithOrigin,
+                countsWithoutOrigin: data.countsWithoutOrigin,
+                visible: true  // Initially all traces are visible
               };
             });
 
@@ -377,14 +439,16 @@ router.get("/iptimeseries", async (req, res) => {
               }
             });
 
-            // Calculate y-axis max value with padding
+            // Calculate y-axis max value with padding based on "All" filter data
+            // This ensures consistent y-axis range across all origin filters
             let maxY = 0;
             traces.forEach(trace => {
-              const traceMax = Math.max(...trace.y);
+              const traceMax = Math.max(...trace.countsTotal);
               if (traceMax > maxY) maxY = traceMax;
             });
             // Add 2% padding to the top
             maxY = maxY * 1.02;
+            const fixedMaxY = maxY; // Store for use in filter function
 
             const layout = {
               xaxis: {
@@ -500,7 +564,17 @@ router.get("/iptimeseries", async (req, res) => {
                 'line.width': traces.map((trace, idx) => idx === curveNumber ? 6 : 3),
                 'opacity': traces.map((trace, idx) => idx === curveNumber ? 1.0 : 0.3),
                 'marker.size': traces.map((trace, idx) => {
-                  return trace.y.map(count => {
+                  // Use the appropriate count data based on current filter
+                  let countsToUse;
+                  if (currentOriginFilter === 'all') {
+                    countsToUse = trace.countsTotal;
+                  } else if (currentOriginFilter === 'origin') {
+                    countsToUse = trace.countsWithOrigin;
+                  } else {
+                    countsToUse = trace.countsWithoutOrigin;
+                  }
+                  
+                  return countsToUse.map(count => {
                     if (count === 0) return 0;
                     return idx === curveNumber ? 18 : 12;
                   });
@@ -513,7 +587,19 @@ router.get("/iptimeseries", async (req, res) => {
               const update = {
                 'line.width': traces.map(() => 3),
                 'opacity': traces.map(() => 1.0),
-                'marker.size': traces.map(trace => trace.y.map(count => count > 0 ? 12 : 0))
+                'marker.size': traces.map(trace => {
+                  // Use the appropriate count data based on current filter
+                  let countsToUse;
+                  if (currentOriginFilter === 'all') {
+                    countsToUse = trace.countsTotal;
+                  } else if (currentOriginFilter === 'origin') {
+                    countsToUse = trace.countsWithOrigin;
+                  } else {
+                    countsToUse = trace.countsWithoutOrigin;
+                  }
+                  
+                  return countsToUse.map(count => count > 0 ? 12 : 0);
+                })
               };
               Plotly.restyle('ipTimeseriesPlot', update);
             });
@@ -565,7 +651,17 @@ router.get("/iptimeseries", async (req, res) => {
                     'line.width': traces.map((trace, idx) => idx === index ? 6 : 3),
                     'opacity': traces.map((trace, idx) => idx === index ? 1.0 : 0.3),
                     'marker.size': traces.map((trace, idx) => {
-                      return trace.y.map(count => {
+                      // Use the appropriate count data based on current filter
+                      let countsToUse;
+                      if (currentOriginFilter === 'all') {
+                        countsToUse = trace.countsTotal;
+                      } else if (currentOriginFilter === 'origin') {
+                        countsToUse = trace.countsWithOrigin;
+                      } else {
+                        countsToUse = trace.countsWithoutOrigin;
+                      }
+                      
+                      return countsToUse.map(count => {
                         if (count === 0) return 0;
                         return idx === index ? 18 : 12;
                       });
@@ -578,7 +674,19 @@ router.get("/iptimeseries", async (req, res) => {
                   const update = {
                     'line.width': traces.map(() => 3),
                     'opacity': traces.map(() => 1.0),
-                    'marker.size': traces.map(trace => trace.y.map(count => count > 0 ? 12 : 0))
+                    'marker.size': traces.map(trace => {
+                      // Use the appropriate count data based on current filter
+                      let countsToUse;
+                      if (currentOriginFilter === 'all') {
+                        countsToUse = trace.countsTotal;
+                      } else if (currentOriginFilter === 'origin') {
+                        countsToUse = trace.countsWithOrigin;
+                      } else {
+                        countsToUse = trace.countsWithoutOrigin;
+                      }
+                      
+                      return countsToUse.map(count => count > 0 ? 12 : 0);
+                    })
                   };
                   Plotly.restyle('ipTimeseriesPlot', update);
                 });
@@ -600,6 +708,59 @@ router.get("/iptimeseries", async (req, res) => {
               if (parseInt(btn.getAttribute('data-days')) === currentDays) {
                 btn.classList.add('active');
               }
+            });
+
+            // Add origin filter button handlers
+            let currentOriginFilter = 'all';
+            
+            function applyOriginFilter(filter) {
+              currentOriginFilter = filter;
+              
+              // Determine which data to show and update y-values
+              const yData = [];
+              const markerSizes = [];
+              
+              traces.forEach((trace, idx) => {
+                let countsToUse;
+                if (filter === 'all') {
+                  countsToUse = trace.countsTotal;
+                } else if (filter === 'origin') {
+                  countsToUse = trace.countsWithOrigin;
+                } else if (filter === 'no-origin') {
+                  countsToUse = trace.countsWithoutOrigin;
+                } else {
+                  countsToUse = trace.countsTotal;
+                }
+                
+                yData.push(countsToUse);
+                markerSizes.push(countsToUse.map(count => count > 0 ? 12 : 0));
+              });
+              
+              // Update trace y-values and marker sizes
+              Plotly.restyle('ipTimeseriesPlot', {
+                y: yData,
+                'marker.size': markerSizes
+              });
+              
+              // Keep y-axis range fixed to the "All" filter range for consistent comparison
+              Plotly.relayout('ipTimeseriesPlot', {
+                'yaxis.range': [0, fixedMaxY]
+              });
+              
+              // Update active button
+              document.querySelectorAll('.origin-filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-filter') === filter) {
+                  btn.classList.add('active');
+                }
+              });
+            }
+            
+            document.querySelectorAll('.origin-filter-btn').forEach(btn => {
+              btn.addEventListener('click', () => {
+                const filter = btn.getAttribute('data-filter');
+                applyOriginFilter(filter);
+              });
             });
           </script>
         </body>
