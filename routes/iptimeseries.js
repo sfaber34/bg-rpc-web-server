@@ -712,6 +712,19 @@ router.get("/iptimeseries", async (req, res) => {
 
             // Add origin filter button handlers
             let currentOriginFilter = 'all';
+            let userHasAdjustedAxis = false;
+            
+            // Track user adjustments to the plot (zoom, pan, etc.)
+            plotElement.on('plotly_relayout', function(eventData) {
+              // Check if user has manually adjusted the y-axis
+              if (eventData['yaxis.range[0]'] !== undefined || eventData['yaxis.range[1]'] !== undefined) {
+                userHasAdjustedAxis = true;
+              }
+              // Check for autorange or double-click reset
+              if (eventData['yaxis.autorange'] === true) {
+                userHasAdjustedAxis = false;
+              }
+            });
             
             function applyOriginFilter(filter) {
               currentOriginFilter = filter;
@@ -742,10 +755,12 @@ router.get("/iptimeseries", async (req, res) => {
                 'marker.size': markerSizes
               });
               
-              // Keep y-axis range fixed to the "All" filter range for consistent comparison
-              Plotly.relayout('ipTimeseriesPlot', {
-                'yaxis.range': [0, fixedMaxY]
-              });
+              // Only reset y-axis range if user hasn't manually adjusted it
+              if (!userHasAdjustedAxis) {
+                Plotly.relayout('ipTimeseriesPlot', {
+                  'yaxis.range': [0, fixedMaxY]
+                });
+              }
               
               // Update active button
               document.querySelectorAll('.origin-filter-btn').forEach(btn => {
