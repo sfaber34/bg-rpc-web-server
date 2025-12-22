@@ -170,6 +170,8 @@ app.use((req, res, next) => {
             <a href="/points" style="margin-right: 15px; color: #333; text-decoration: none;">Points</a>
             <a href="/cacheddata" style="margin-right: 15px; color: #333; text-decoration: none;">Cached Data</a>
             <a href="/fallbackurl" style="margin-right: 15px; color: #333; text-decoration: none;">Fallback URL</a>
+            <a href="/ratelimitstatus" style="margin-right: 15px; color: #333; text-decoration: none;">Rate Limits</a>
+            <a href="/blackliststatus" style="margin-right: 15px; color: #333; text-decoration: none;">Blacklist</a>
           </div>
           <a href="/logout" style="color: #d9534f; text-decoration: none; font-weight: bold;">Logout</a>
         </div>
@@ -201,6 +203,8 @@ const watchdogRouter = require('./routes/watchdog');
 const ipTableRouter = require('./routes/iptable');
 const ipTimeseriesRouter = require('./routes/iptimeseries');
 const originTimeseriesRouter = require('./routes/origintimeseries');
+const rateLimitStatusRouter = require('./routes/ratelimitstatus');
+const blacklistStatusRouter = require('./routes/blackliststatus');
 
 app.use(dashboardRouter);
 app.use(logsRouter);
@@ -216,6 +220,8 @@ app.use(watchdogRouter);
 app.use(ipTableRouter);
 app.use(ipTimeseriesRouter);
 app.use(originTimeseriesRouter);
+app.use(rateLimitStatusRouter);
+app.use(blacklistStatusRouter);
 
 // Add root redirect to dashboard
 app.get('/', (req, res) => {
