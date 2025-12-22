@@ -54,7 +54,25 @@ async function getIpTableData() {
   let pool;
   try {
     pool = await getDbConnection();
-    const result = await pool.query('SELECT ip, origins, requests_last_hour, requests_this_month, requests_total, last_reset_timestamp, updated_at FROM ip_table ORDER BY requests_total DESC');
+    const result = await pool.query(`
+      SELECT 
+        ip,
+        requests_total,
+        origins,
+        requests_last_hour,
+        origins_last_hour,
+        requests_previous_hour,
+        origins_previous_hour,
+        requests_today,
+        origins_today,
+        requests_this_month,
+        last_reset_timestamp,
+        last_day_reset_timestamp,
+        last_month_reset_timestamp,
+        updated_at
+      FROM ip_table 
+      ORDER BY requests_total DESC
+    `);
     return result.rows;
   } catch (error) {
     console.error('Error getting IP table data:', error);
@@ -110,54 +128,76 @@ router.get("/iptable", async (req, res) => {
 
     // Build table rows from RDS data - map fields to columns in correct order
     let tableRows = '';
+    
+    // Format timestamps - handle epoch timestamps (numbers/strings), Date objects, and string formats
+    const formatTimestamp = (ts) => {
+      if (!ts) return '';
+      try {
+        let date;
+        // Check if it's a number or numeric string (epoch timestamp in seconds)
+        const numericValue = Number(ts);
+        if (!isNaN(numericValue) && numericValue > 1000000000 && numericValue < 10000000000) {
+          // Likely an epoch timestamp in seconds (10 digits)
+          date = new Date(numericValue * 1000); // Convert seconds to milliseconds
+        } else if (ts instanceof Date) {
+          date = ts;
+        } else {
+          date = new Date(ts);
+        }
+        return isNaN(date.getTime()) ? ts : date.toLocaleString('en-US', { 
+          year: 'numeric', 
+          month: '2-digit', 
+          day: '2-digit', 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          second: '2-digit',
+          hour12: false 
+        });
+      } catch (e) {
+        return ts;
+      }
+    };
+
+    // Format JSONB fields
+    const formatJsonb = (val) => {
+      if (!val) return '{}';
+      return typeof val === 'object' ? JSON.stringify(val) : val;
+    };
+
     data.forEach((rowData) => {
       // Extract fields in the correct order matching headers
       const ip = rowData.ip || '';
-      const origins = typeof rowData.origins === 'object' ? JSON.stringify(rowData.origins) : (rowData.origins || '');
-      const requestsLastHour = rowData.requests_last_hour || 0;
-      const requestsThisMonth = rowData.requests_this_month || 0;
       const requestsTotal = rowData.requests_total || 0;
+      const origins = formatJsonb(rowData.origins);
+      const requestsLastHour = rowData.requests_last_hour || 0;
+      const originsLastHour = formatJsonb(rowData.origins_last_hour);
+      const requestsPreviousHour = rowData.requests_previous_hour || 0;
+      const originsPreviousHour = formatJsonb(rowData.origins_previous_hour);
+      const requestsToday = rowData.requests_today || 0;
+      const originsToday = formatJsonb(rowData.origins_today);
+      const requestsThisMonth = rowData.requests_this_month || 0;
       
-      // Format timestamps - handle epoch timestamps (numbers/strings), Date objects, and string formats
-      const formatTimestamp = (ts) => {
-        if (!ts) return '';
-        try {
-          let date;
-          // Check if it's a number or numeric string (epoch timestamp in seconds)
-          const numericValue = Number(ts);
-          if (!isNaN(numericValue) && numericValue > 1000000000 && numericValue < 10000000000) {
-            // Likely an epoch timestamp in seconds (10 digits)
-            date = new Date(numericValue * 1000); // Convert seconds to milliseconds
-          } else if (ts instanceof Date) {
-            date = ts;
-          } else {
-            date = new Date(ts);
-          }
-          return isNaN(date.getTime()) ? ts : date.toLocaleString('en-US', { 
-            year: 'numeric', 
-            month: '2-digit', 
-            day: '2-digit', 
-            hour: '2-digit', 
-            minute: '2-digit', 
-            second: '2-digit',
-            hour12: false 
-          });
-        } catch (e) {
-          return ts;
-        }
-      };
-      
+      // Timestamps at the far right
       const lastResetTimestamp = formatTimestamp(rowData.last_reset_timestamp);
+      const lastDayResetTimestamp = formatTimestamp(rowData.last_day_reset_timestamp);
+      const lastMonthResetTimestamp = formatTimestamp(rowData.last_month_reset_timestamp);
       const updatedAt = formatTimestamp(rowData.updated_at);
       
       tableRows += `
         <tr>
           <td><a href="#" class="ip-link" data-ip="${ip}">${ip}</a></td>
+          <td>${requestsTotal}</td>
           <td>${origins}</td>
           <td>${requestsLastHour}</td>
+          <td>${originsLastHour}</td>
+          <td>${requestsPreviousHour}</td>
+          <td>${originsPreviousHour}</td>
+          <td>${requestsToday}</td>
+          <td>${originsToday}</td>
           <td>${requestsThisMonth}</td>
-          <td>${requestsTotal}</td>
           <td>${lastResetTimestamp}</td>
+          <td>${lastDayResetTimestamp}</td>
+          <td>${lastMonthResetTimestamp}</td>
           <td>${updatedAt}</td>
         </tr>
       `;
@@ -169,11 +209,18 @@ router.get("/iptable", async (req, res) => {
     // Define custom header names
     const headerCells = `
       <th data-sort="string">IP</th>
+      <th data-sort="number">Requests Total</th>
       <th data-sort="string">Origins</th>
       <th data-sort="number">Requests Last Hour</th>
+      <th data-sort="string">Origins Last Hour</th>
+      <th data-sort="number">Requests Previous Hour</th>
+      <th data-sort="string">Origins Previous Hour</th>
+      <th data-sort="number">Requests Today</th>
+      <th data-sort="string">Origins Today</th>
       <th data-sort="number">Requests This Month</th>
-      <th data-sort="number">Requests Total</th>
       <th data-sort="string">Last Hourly Reset</th>
+      <th data-sort="string">Last Daily Reset</th>
+      <th data-sort="string">Last Monthly Reset</th>
       <th data-sort="string">Updated At</th>
     `;
 
@@ -187,19 +234,23 @@ router.get("/iptable", async (req, res) => {
               margin: 0px;
             }
             table { 
-              font-size: 14px;
+              font-size: 12px;
               width: 100%;
-              max-width: 1200px;
               margin: 20px auto;
               border-collapse: collapse;
             }
             th, td { 
-              padding: 12px;
+              padding: 8px;
               text-align: left;
               vertical-align: top;
               border: 1px solid #ddd;
               word-wrap: break-word;
-              max-width: 300px;
+              max-width: 200px;
+              white-space: nowrap;
+            }
+            .table-container {
+              overflow-x: auto;
+              margin: 20px;
             }
             th {
               background-color: #f2f2f2;
@@ -331,16 +382,18 @@ router.get("/iptable", async (req, res) => {
             </div>
           </div>
           
-          <table id="ipTable">
-            <thead>
-              <tr>
-                ${headerCells}
-              </tr>
-            </thead>
-            <tbody>
-              ${tableRows}
-            </tbody>
-          </table>
+          <div class="table-container">
+            <table id="ipTable">
+              <thead>
+                <tr>
+                  ${headerCells}
+                </tr>
+              </thead>
+              <tbody>
+                ${tableRows}
+              </tbody>
+            </table>
+          </div>
 
           <script>
             document.addEventListener('DOMContentLoaded', function() {
