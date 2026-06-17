@@ -87,7 +87,7 @@ router.get("/requestortable", async (req, res) => {
           <table id="statsTable">
             <thead>
               <tr>
-                <th data-sort="string">Domain</th>
+                <th data-sort="string">Origin</th>
                 <th data-sort="number" class="sort-desc">All Requests (All Time)</th>
                 <th data-sort="number">Cache Requests (All Time)</th>
                 <th data-sort="number">Pool Requests (All Time)</th>

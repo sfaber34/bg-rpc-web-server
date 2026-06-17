@@ -167,7 +167,6 @@ app.use((req, res, next) => {
             <a href="/iptable" style="margin-right: 15px; color: #333; text-decoration: none;">IP Table</a>
             <a href="/iptimeseries" style="margin-right: 15px; color: #333; text-decoration: none;">IP Timeseries</a>
             <a href="/origintimeseries" style="margin-right: 15px; color: #333; text-decoration: none;">Origin Timeseries</a>
-            <a href="/points" style="margin-right: 15px; color: #333; text-decoration: none;">Points</a>
             <a href="/cacheddata" style="margin-right: 15px; color: #333; text-decoration: none;">Cached Data</a>
             <a href="/fallbackurl" style="margin-right: 15px; color: #333; text-decoration: none;">Fallback URL</a>
             <a href="/ratelimitstatus" style="margin-right: 15px; color: #333; text-decoration: none;">Rate Limits</a>

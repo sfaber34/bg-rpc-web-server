@@ -172,7 +172,7 @@ router.get("/cacheddata", async (req, res) => {
           <table id="cacheTable">
             <thead>
               <tr>
-                <th data-sort="string">Key</th>
+                <th data-sort="string">Method</th>
                 <th data-sort="string">Params</th>
                 <th data-sort="string">Value</th>
                 <th data-sort="number">Timestamp</th>
